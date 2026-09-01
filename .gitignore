@@ -16,6 +16,7 @@ expo-env.d.ts
 
 # Vercel
 .vercel/
+.deploy-keys/
 
 # Native
 .kotlin/
