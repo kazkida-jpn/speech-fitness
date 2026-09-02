@@ -7,13 +7,19 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import type { RecordingInput } from 'expo-audio';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
-import { recommendDrills } from '@/lib/drills';
+import { DRILLS, recommendDrills } from '@/lib/drills';
+import {
+  getMicrophonePreference,
+  resolveMicrophonePreference,
+  saveMicrophonePreference,
+  type MicrophonePreference,
+} from '@/lib/microphone-preference';
 import { saveAssessmentHistory } from '@/lib/progress';
 
 const TEST_TEXT_POOLS = [
@@ -131,6 +137,8 @@ type AiDiagnosis = {
   soundTendencies: string[];
   stability: string;
   practice: string;
+  recommendedDrillId: string;
+  recommendedDrillReason: string;
 };
 
 function encodeMonoPcmWav(samples: Float32Array, sampleRate: number) {
@@ -261,6 +269,7 @@ function deduplicateInputs(inputs: RecordingInput[]) {
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 100);
   const player = useAudioPlayer(null);
@@ -286,6 +295,17 @@ export default function HomeScreen() {
   const [aiDiagnosis, setAiDiagnosis] = useState<AiDiagnosis | null>(null);
   const [isCreatingDiagnosis, setIsCreatingDiagnosis] = useState(false);
   const [diagnosisError, setDiagnosisError] = useState<string | null>(null);
+  const [microphonePreference, setMicrophonePreference] = useState<MicrophonePreference | null>(null);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+
+  useEffect(() => {
+    getMicrophonePreference().then((preference) => {
+      if (!preference) return;
+      setMicrophonePreference(preference);
+      setSelectedInputUid(preference.uid);
+      setCurrentInputName(preference.name || preference.type || '既定のマイク');
+    });
+  }, []);
 
   useEffect(() => {
     if (phase !== 'recording' || recorderState.metering === undefined) {
@@ -323,12 +343,15 @@ export default function HomeScreen() {
       await recorder.prepareToRecordAsync();
       const inputs = deduplicateInputs(recorder.getAvailableInputs());
       const currentInput = await recorder.getCurrentInput();
+      const preferredInput = resolveMicrophonePreference(inputs, microphonePreference);
+      if (preferredInput) recorder.setInput(preferredInput.uid);
       setAvailableInputs(inputs);
       setAvailableInputCount(inputs.length);
       setIsInputListOpen(true);
-      setCurrentInputName(currentInput.name || currentInput.type || '既定のマイク');
-      if (selectedInputUid === null) {
-        setSelectedInputUid(currentInput.uid);
+      const displayedInput = preferredInput ?? currentInput;
+      setCurrentInputName(displayedInput.name || displayedInput.type || '既定のマイク');
+      if (selectedInputUid === null || preferredInput) {
+        setSelectedInputUid(displayedInput.uid);
       }
 
       recorder.record();
@@ -350,11 +373,13 @@ export default function HomeScreen() {
     }
   };
 
-  const selectMicrophoneInput = (input: RecordingInput) => {
+  const selectMicrophoneInput = async (input: RecordingInput) => {
     try {
       recorder.setInput(input.uid);
       setSelectedInputUid(input.uid);
       setCurrentInputName(input.name || input.type || '既定のマイク');
+      const preference = await saveMicrophonePreference(input);
+      setMicrophonePreference(preference);
       setErrorMessage(null);
     } catch {
       setErrorMessage('このマイクを選択できませんでした。もう一度一覧を読み込んでください。');
@@ -383,14 +408,17 @@ export default function HomeScreen() {
     }
     try {
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      if (selectedInputUid !== null) {
-        recorder.setInput(selectedInputUid);
-      }
       await recorder.prepareToRecordAsync();
       const availableInputs = deduplicateInputs(recorder.getAvailableInputs());
-      const currentInput = await recorder.getCurrentInput();
+      const preferredInput =
+        resolveMicrophonePreference(availableInputs, microphonePreference) ??
+        availableInputs.find((input) => input.uid === selectedInputUid) ??
+        null;
+      if (preferredInput) recorder.setInput(preferredInput.uid);
+      const currentInput = preferredInput ?? (await recorder.getCurrentInput());
       setAvailableInputs(availableInputs);
       setAvailableInputCount(availableInputs.length);
+      setSelectedInputUid(currentInput.uid);
       setCurrentInputName(currentInput.name || currentInput.type || '既定のマイク');
       recorder.record();
 
@@ -612,9 +640,12 @@ export default function HomeScreen() {
           body.stability,
           body.practice,
         ].join(' ');
+        const recommendedIds = [body.recommendedDrillId, ...recommendDrills(diagnosisText)]
+          .filter((id, index, values) => id && values.indexOf(id) === index)
+          .slice(0, 3);
         await saveAssessmentHistory({
           headline: body.headline,
-          recommendedDrillIds: recommendDrills(diagnosisText),
+          recommendedDrillIds: recommendedIds,
         });
         assessmentSavedRef.current = true;
       }
@@ -631,6 +662,9 @@ export default function HomeScreen() {
   const validSpeedChanges = pairSpeedChanges.filter((value): value is number => value !== null);
   const averageSpeedChange = validSpeedChanges.length
     ? Math.round(validSpeedChanges.reduce((total, value) => total + value, 0) / validSpeedChanges.length)
+    : null;
+  const recommendedDrill = aiDiagnosis
+    ? DRILLS.find((drill) => drill.id === aiDiagnosis.recommendedDrillId) ?? null
     : null;
   const displayedDuration =
     phase === 'recording'
@@ -820,6 +854,33 @@ export default function HomeScreen() {
                         <Text style={styles.practiceLabel}>次の練習</Text>
                         <Text style={styles.practiceText}>{aiDiagnosis.practice}</Text>
                       </View>
+                      {recommendedDrill && (
+                        <View style={styles.recommendedDrillCard}>
+                          <View style={styles.recommendedDrillHeader}>
+                            <Text style={styles.recommendedDrillEyebrow}>AIが最優先に選んだドリル</Text>
+                            <Text style={styles.premiumBadge}>プレミアム</Text>
+                          </View>
+                          <Text style={styles.recommendedDrillTitle}>{recommendedDrill.title}</Text>
+                          <Text style={styles.recommendedDrillReason}>{aiDiagnosis.recommendedDrillReason}</Text>
+                          <Pressable style={styles.recommendedDrillButton} onPress={() => setIsPaywallOpen(true)}>
+                            <Text style={styles.recommendedDrillButtonText}>このドリルを始める</Text>
+                          </Pressable>
+                        </View>
+                      )}
+                      {isPaywallOpen && recommendedDrill && (
+                        <View style={styles.paywallCard}>
+                          <Text style={styles.paywallTitle}>診断に合わせた練習を続ける</Text>
+                          <Text style={styles.paywallText}>推奨ドリル、練習履歴、週次レポートは有料プランで提供予定です。現在は体験版として利用できます。</Text>
+                          <Pressable
+                            style={styles.recommendedDrillButton}
+                            onPress={() => router.push({ pathname: '/drills', params: { drill: recommendedDrill.id, source: 'diagnosis' } })}>
+                            <Text style={styles.recommendedDrillButtonText}>体験版でドリルへ進む</Text>
+                          </Pressable>
+                          <Pressable onPress={() => setIsPaywallOpen(false)}>
+                            <Text style={styles.paywallClose}>今は閉じる</Text>
+                          </Pressable>
+                        </View>
+                      )}
                     </>
                   )}
                   {diagnosisError && !isCreatingDiagnosis && (
@@ -1174,6 +1235,18 @@ const styles = StyleSheet.create({
   practiceBox: { backgroundColor: colors.white, borderRadius: 13, padding: 13, marginTop: 15 },
   practiceLabel: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
   practiceText: { color: colors.ink, fontSize: 12, lineHeight: 20, marginTop: 4 },
+  recommendedDrillCard: { backgroundColor: '#F1F8F5', borderRadius: 15, padding: 15, marginTop: 14, borderWidth: 1, borderColor: colors.line },
+  recommendedDrillHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  recommendedDrillEyebrow: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
+  premiumBadge: { color: '#805B12', fontSize: 9, fontWeight: '800', backgroundColor: '#FFF1BE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
+  recommendedDrillTitle: { color: colors.ink, fontSize: 17, fontWeight: '800', marginTop: 8 },
+  recommendedDrillReason: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 5 },
+  recommendedDrillButton: { backgroundColor: colors.greenDark, borderRadius: 13, alignItems: 'center', paddingVertical: 12, marginTop: 12 },
+  recommendedDrillButtonText: { color: colors.white, fontSize: 13, fontWeight: '800' },
+  paywallCard: { backgroundColor: colors.white, borderRadius: 15, padding: 15, marginTop: 10, borderWidth: 1, borderColor: '#EBDCA8' },
+  paywallTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
+  paywallText: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 6 },
+  paywallClose: { color: colors.muted, fontSize: 11, fontWeight: '700', textAlign: 'center', marginTop: 11 },
   aiDiagnosisError: { color: '#B63D2C', fontSize: 12, lineHeight: 19, marginTop: 15 },
   aiRetryButton: { borderWidth: 1, borderColor: '#C7A747', borderRadius: 12, alignItems: 'center', paddingVertical: 11, marginTop: 10 },
   aiRetryButtonText: { color: '#805B12', fontSize: 12, fontWeight: '800' },

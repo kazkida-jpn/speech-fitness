@@ -34,7 +34,7 @@ type AssessmentSummary = {
 const diagnosisSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['headline', 'summary', 'strengths', 'cautions', 'soundTendencies', 'stability', 'practice'],
+  required: ['headline', 'summary', 'strengths', 'cautions', 'soundTendencies', 'stability', 'practice', 'recommendedDrillId', 'recommendedDrillReason'],
   properties: {
     headline: { type: 'string' },
     summary: { type: 'string' },
@@ -43,6 +43,11 @@ const diagnosisSchema = {
     soundTendencies: { type: 'array', items: { type: 'string' }, maxItems: 3 },
     stability: { type: 'string' },
     practice: { type: 'string' },
+    recommendedDrillId: {
+      type: 'string',
+      enum: ['sibilants', 'consonants', 'mora', 'endings', 'connections', 'rhythm', 'pauses', 'speed'],
+    },
+    recommendedDrillReason: { type: 'string' },
   },
 };
 
@@ -145,7 +150,7 @@ export async function POST(request: Request) {
       model,
       reasoning: { effort: 'low' },
       instructions:
-        'あなたは日本語の発話トレーニング結果を説明するコーチです。入力には3つの例文について自然な速さと早口の計6測定が入っています。入力された測定値だけを根拠に、親しみやすく簡潔な日本語で総合診断してください。点数を新しく作らず、医学的診断をせず、文章一致度が低い測定は断定的に評価しないでください。3組を横断して、速くしても明瞭さが保たれたか、例文によるばらつきがあるかを説明してください。音の傾向はfocusSoundsと低評価語を根拠にし、複数の測定で繰り返した場合を重視してください。一度だけ低かった語や音は可能性として表現してください。安定性は速度変動率、平均流暢さ、0.6秒以上の語間の数だけを根拠に説明し、音量や声の高さについて推測しないでください。',
+        'あなたは日本語の発話トレーニング結果を説明するコーチです。入力には3つの例文について自然な速さと早口の計6測定が入っています。入力された測定値だけを根拠に、親しみやすく簡潔な日本語で総合診断してください。点数を新しく作らず、医学的診断をせず、文章一致度が低い測定は断定的に評価しないでください。3組を横断して、速くしても明瞭さが保たれたか、例文によるばらつきがあるかを説明してください。音の傾向はfocusSoundsと低評価語を根拠にし、複数の測定で繰り返した場合を重視してください。一度だけ低かった語や音は可能性として表現してください。安定性は速度変動率、平均流暢さ、0.6秒以上の語間の数だけを根拠に説明し、音量や声の高さについて推測しないでください。最後に今回もっとも優先すべきドリルを1つだけ選び、recommendedDrillIdには sibilants, consonants, mora, endings, connections, rhythm, pauses, speed のいずれかを入れてください。recommendedDrillReasonは測定結果に基づく短い理由にしてください。',
       input: JSON.stringify(payload),
       max_output_tokens: 900,
       text: {
