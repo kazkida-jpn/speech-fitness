@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
 import { DRILLS } from '@/lib/drills';
-import { getAssessmentHistory, getDrillHistory, localDateKey } from '@/lib/progress';
+import { getAssessmentHistory, getDrillHistory, isHistoryUserSignedIn, localDateKey } from '@/lib/progress';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 const colors = { ink: '#19312D', muted: '#60726E', cream: '#F6F3EC', white: '#FFFFFF', green: '#187A64', greenDark: '#0F5E4D', mint: '#DDF4EA', line: '#DCE6E2' };
@@ -15,11 +15,13 @@ export default function HomeScreen() {
   const [historyByDate, setHistoryByDate] = useState<Record<string, { seconds: number; sentences: number }>>({});
   const [recommendedIds, setRecommendedIds] = useState<string[]>(['sibilants', 'speed']);
   const [lastCheckDate, setLastCheckDate] = useState<string | null>(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   useFocusEffect(useCallback(() => {
     let active = true;
-    Promise.all([getDrillHistory(), getAssessmentHistory()]).then(([drills, checks]) => {
+    Promise.all([isHistoryUserSignedIn(), getDrillHistory(), getAssessmentHistory()]).then(([signedIn, drills, checks]) => {
       if (!active) return;
+      setIsSignedIn(signedIn);
       const grouped: Record<string, { seconds: number; sentences: number }> = {};
       drills.forEach((entry) => {
         grouped[entry.date] ||= { seconds: 0, sentences: 0 };
@@ -32,6 +34,10 @@ export default function HomeScreen() {
         setLastCheckDate(latest.date);
         if (latest.recommendedDrillIds.length) setRecommendedIds(latest.recommendedDrillIds);
       }
+    }).catch(() => {
+      if (!active) return;
+      setIsSignedIn(false);
+      setHistoryByDate({});
     });
     return () => { active = false; };
   }, []));
@@ -72,8 +78,9 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>発話カレンダー</Text><Link href="/history" style={styles.textLink}>履歴を見る</Link></View>
+        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>発話カレンダー</Text>{isSignedIn && <Link href="/history" style={styles.textLink}>履歴を見る</Link>}</View>
         <View style={styles.calendarCard}>
+          {!isSignedIn && <View style={styles.loginNotice}><Text style={styles.loginNoticeTitle}>ログインすると練習記録を残せます</Text><Text style={styles.loginNoticeText}>ドリルはそのままお試しいただけます。ログイン後の練習は日ごとに記録されます。</Text></View>}
           <View style={styles.monthNav}>
             <Pressable onPress={() => setMonth(new Date(year, monthIndex - 1, 1))}><Text style={styles.monthArrow}>‹</Text></Pressable>
             <Text style={styles.monthTitle}>{year}年{monthIndex + 1}月</Text>
@@ -89,14 +96,14 @@ export default function HomeScreen() {
               return <View key={day} style={[styles.dayCell, { backgroundColor: intensity }]}><Text style={[styles.dayNumber, minutes >= 6 && styles.dayTextLight]}>{day}</Text>{minutes > 0 && <Text style={[styles.dayMinutes, minutes >= 6 && styles.dayTextLight]}>{minutes}分</Text>}</View>;
             })}
           </View>
-          <Text style={styles.monthSummary}>今月 {Math.round(monthSeconds / 60)}分・{monthSentences}文・{monthEntries.length}日練習</Text>
+          {isSignedIn && <Text style={styles.monthSummary}>今月 {Math.round(monthSeconds / 60)}分・{monthSentences}文・{monthEntries.length}日練習</Text>}
         </View>
-        {!isSupabaseConfigured && <Text style={styles.setupNote}>Googleログインとクラウド保存はSupabase設定後に有効になります。現在の練習履歴はこの端末に保存されます。</Text>}
+        {!isSupabaseConfigured && <Text style={styles.setupNote}>Googleログインとクラウド保存はSupabase設定後に有効になります。</Text>}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea:{flex:1,backgroundColor:colors.cream},container:{width:'100%',maxWidth:820,alignSelf:'center',padding:22,paddingBottom:50},header:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:22},eyebrow:{color:colors.green,fontSize:11,fontWeight:'800',letterSpacing:2},logo:{color:colors.ink,fontSize:24,fontWeight:'800',marginTop:3},userName:{color:colors.muted,fontSize:12,maxWidth:220},loginButton:{backgroundColor:colors.white,borderWidth:1,borderColor:colors.line,borderRadius:14,paddingHorizontal:13,paddingVertical:10},loginButtonText:{color:colors.greenDark,fontSize:12,fontWeight:'800'},checkCard:{backgroundColor:colors.greenDark,borderRadius:24,padding:22},checkLabel:{color:'#CBE9DD',fontSize:12,fontWeight:'700'},checkValue:{color:colors.white,fontSize:27,fontWeight:'800',marginTop:5},checkNote:{color:'#E6F4EF',fontSize:13,lineHeight:20,marginTop:7},checkButton:{backgroundColor:colors.white,borderRadius:14,alignItems:'center',paddingVertical:13,marginTop:16},checkButtonText:{color:colors.greenDark,fontSize:14,fontWeight:'800'},sectionHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:28,marginBottom:12},sectionTitle:{color:colors.ink,fontSize:19,fontWeight:'800'},textLink:{color:colors.green,fontSize:12,fontWeight:'700'},recommendGrid:{flexDirection:'row',flexWrap:'wrap',gap:10},recommendCard:{flexGrow:1,flexBasis:280,borderRadius:18,padding:17,minHeight:160},recommendTag:{color:colors.greenDark,fontSize:10,fontWeight:'800'},recommendTitle:{color:colors.ink,fontSize:18,fontWeight:'800',marginTop:5},recommendBody:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:7},recommendAction:{color:colors.greenDark,fontSize:12,fontWeight:'800',marginTop:'auto',paddingTop:12},calendarCard:{backgroundColor:colors.white,borderRadius:22,padding:16,borderWidth:1,borderColor:colors.line},monthNav:{flexDirection:'row',justifyContent:'center',alignItems:'center',gap:22,marginBottom:12},monthArrow:{color:colors.greenDark,fontSize:28,paddingHorizontal:8},monthTitle:{color:colors.ink,fontSize:16,fontWeight:'800'},weekRow:{flexDirection:'row'},weekDay:{width:'14.285%',textAlign:'center',color:colors.muted,fontSize:11,paddingBottom:7},calendarGrid:{flexDirection:'row',flexWrap:'wrap',gap:0},dayCell:{width:'13.4%',aspectRatio:1,borderRadius:9,margin:'0.44%',alignItems:'center',justifyContent:'center'},dayCellEmpty:{width:'13.4%',aspectRatio:1,margin:'0.44%'},dayNumber:{color:colors.ink,fontSize:11,fontWeight:'700'},dayMinutes:{color:colors.greenDark,fontSize:9,fontWeight:'800',marginTop:2},dayTextLight:{color:colors.white},monthSummary:{color:colors.muted,fontSize:11,marginTop:12},setupNote:{color:colors.muted,fontSize:11,lineHeight:18,textAlign:'center',marginTop:18},
+  safeArea:{flex:1,backgroundColor:colors.cream},container:{width:'100%',maxWidth:820,alignSelf:'center',padding:22,paddingBottom:50},header:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:22},eyebrow:{color:colors.green,fontSize:11,fontWeight:'800',letterSpacing:2},logo:{color:colors.ink,fontSize:24,fontWeight:'800',marginTop:3},userName:{color:colors.muted,fontSize:12,maxWidth:220},loginButton:{backgroundColor:colors.white,borderWidth:1,borderColor:colors.line,borderRadius:14,paddingHorizontal:13,paddingVertical:10},loginButtonText:{color:colors.greenDark,fontSize:12,fontWeight:'800'},checkCard:{backgroundColor:colors.greenDark,borderRadius:24,padding:22},checkLabel:{color:'#CBE9DD',fontSize:12,fontWeight:'700'},checkValue:{color:colors.white,fontSize:27,fontWeight:'800',marginTop:5},checkNote:{color:'#E6F4EF',fontSize:13,lineHeight:20,marginTop:7},checkButton:{backgroundColor:colors.white,borderRadius:14,alignItems:'center',paddingVertical:13,marginTop:16},checkButtonText:{color:colors.greenDark,fontSize:14,fontWeight:'800'},sectionHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',marginTop:28,marginBottom:12},sectionTitle:{color:colors.ink,fontSize:19,fontWeight:'800'},textLink:{color:colors.green,fontSize:12,fontWeight:'700'},recommendGrid:{flexDirection:'row',flexWrap:'wrap',gap:10},recommendCard:{flexGrow:1,flexBasis:280,borderRadius:18,padding:17,minHeight:160},recommendTag:{color:colors.greenDark,fontSize:10,fontWeight:'800'},recommendTitle:{color:colors.ink,fontSize:18,fontWeight:'800',marginTop:5},recommendBody:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:7},recommendAction:{color:colors.greenDark,fontSize:12,fontWeight:'800',marginTop:'auto',paddingTop:12},calendarCard:{backgroundColor:colors.white,borderRadius:22,padding:16,borderWidth:1,borderColor:colors.line},loginNotice:{backgroundColor:'#FFF7D6',borderRadius:14,padding:14,marginBottom:12},loginNoticeTitle:{color:colors.ink,fontSize:13,fontWeight:'800'},loginNoticeText:{color:colors.muted,fontSize:11,lineHeight:18,marginTop:3},monthNav:{flexDirection:'row',justifyContent:'center',alignItems:'center',gap:22,marginBottom:12},monthArrow:{color:colors.greenDark,fontSize:28,paddingHorizontal:8},monthTitle:{color:colors.ink,fontSize:16,fontWeight:'800'},weekRow:{flexDirection:'row'},weekDay:{width:'14.285%',textAlign:'center',color:colors.muted,fontSize:11,paddingBottom:7},calendarGrid:{flexDirection:'row',flexWrap:'wrap',gap:0},dayCell:{width:'13.4%',aspectRatio:1,borderRadius:9,margin:'0.44%',alignItems:'center',justifyContent:'center'},dayCellEmpty:{width:'13.4%',aspectRatio:1,margin:'0.44%'},dayNumber:{color:colors.ink,fontSize:11,fontWeight:'700'},dayMinutes:{color:colors.greenDark,fontSize:9,fontWeight:'800',marginTop:2},dayTextLight:{color:colors.white},monthSummary:{color:colors.muted,fontSize:11,marginTop:12},setupNote:{color:colors.muted,fontSize:11,lineHeight:18,textAlign:'center',marginTop:18},
 });
