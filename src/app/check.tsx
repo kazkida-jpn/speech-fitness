@@ -143,6 +143,7 @@ type AiDiagnosis = {
 
 type WordSpeedComparison = {
   word: string;
+  focusWord: string;
   naturalScore: number;
   fastScore: number;
   drop: number;
@@ -249,6 +250,37 @@ function normalizeComparedWord(word: string) {
   return word.replace(/[\s、。！？!?「」『』（）()・]/g, '').trim();
 }
 
+const CONTEXT_DEPENDENT_WORDS = new Set([
+  'は', 'が', 'を', 'に', 'へ', 'と', 'で', 'の', 'も', 'や', 'か', 'ね', 'よ', 'て', 'し',
+  'です', 'ます', 'でした', 'ました', 'ません', 'ない', 'たい', 'れる', 'られる', 'せる', 'させる',
+]);
+
+function needsSpeakingContext(word: string) {
+  return /^[ぁ-んー]+$/.test(word) && (word.length === 1 || CONTEXT_DEPENDENT_WORDS.has(word));
+}
+
+function speakingContext(words: ClarityWord[], index: number) {
+  const focusWord = normalizeComparedWord(words[index]?.word ?? '');
+  if (!focusWord || !needsSpeakingContext(focusWord)) return focusWord;
+
+  let start = index;
+  while (start > 0) {
+    start -= 1;
+    const previous = normalizeComparedWord(words[start]?.word ?? '');
+    if (previous && !needsSpeakingContext(previous)) break;
+  }
+  let end = index;
+  if (focusWord === 'し' && normalizeComparedWord(words[index + 1]?.word ?? '') === 'て') end += 1;
+  if (start === index && words[index + 1]) end = index + 1;
+
+  const phrase = words
+    .slice(start, end + 1)
+    .map((word) => normalizeComparedWord(word.word))
+    .filter(Boolean)
+    .join('');
+  return phrase || focusWord;
+}
+
 function compareWordsBySpeed(results: Partial<Record<number, ClarityAssessment>>) {
   const comparisons: WordSpeedComparison[] = [];
   for (let sentenceIndex = 0; sentenceIndex < 3; sentenceIndex += 1) {
@@ -257,7 +289,7 @@ function compareWordsBySpeed(results: Partial<Record<number, ClarityAssessment>>
     if (!natural || !fast || natural.completenessScore < 70 || fast.completenessScore < 70) continue;
 
     const availableFastWords = fast.words.map((word, index) => ({ word, index, used: false }));
-    natural.words.forEach((naturalWord) => {
+    natural.words.forEach((naturalWord, naturalIndex) => {
       const normalized = normalizeComparedWord(naturalWord.word);
       if (!normalized || naturalWord.errorType === 'Omission') return;
       const matched = availableFastWords.find(
@@ -266,7 +298,8 @@ function compareWordsBySpeed(results: Partial<Record<number, ClarityAssessment>>
       if (!matched) return;
       matched.used = true;
       comparisons.push({
-        word: naturalWord.word,
+        word: speakingContext(natural.words, naturalIndex),
+        focusWord: normalized,
         naturalScore: Math.round(naturalWord.accuracyScore),
         fastScore: Math.round(matched.word.accuracyScore),
         drop: Math.round(naturalWord.accuracyScore - matched.word.accuracyScore),
@@ -276,7 +309,7 @@ function compareWordsBySpeed(results: Partial<Record<number, ClarityAssessment>>
 
   const mostRelevantByWord = new Map<string, WordSpeedComparison>();
   comparisons.forEach((comparison) => {
-    const key = normalizeComparedWord(comparison.word);
+    const key = `${normalizeComparedWord(comparison.word)}:${comparison.focusWord}`;
     const previous = mostRelevantByWord.get(key);
     if (!previous || comparison.drop > previous.drop) mostRelevantByWord.set(key, comparison);
   });
@@ -814,8 +847,11 @@ export default function HomeScreen() {
                     <View style={styles.wordComparisonSection}>
                       <Text style={styles.wordComparisonSectionTitle}>早口で低下が大きかった言葉</Text>
                       {wordSpeedComparison.declined.map((item) => (
-                        <View key={`declined-${item.word}`} style={styles.wordComparisonRow}>
-                          <Text style={styles.wordComparisonWord}>{item.word}</Text>
+                        <View key={`declined-${item.word}-${item.focusWord}`} style={styles.wordComparisonRow}>
+                          <View style={styles.wordComparisonGuidance}>
+                            <Text style={styles.wordComparisonWord}>{item.word}</Text>
+                            <Text style={styles.wordComparisonTip}>「{item.word}」をひとまとまりで、最後まで音を残して読んでみましょう。</Text>
+                          </View>
                           <View style={styles.wordComparisonScores}>
                             <View style={[styles.wordScore, { backgroundColor: wordScoreColors(item.naturalScore).backgroundColor }]}><Text style={styles.wordScoreLabel}>通常</Text><Text style={[styles.wordScoreValue, { color: wordScoreColors(item.naturalScore).color }]}>{item.naturalScore}</Text></View>
                             <Text style={styles.wordComparisonArrow}>→</Text>
@@ -830,7 +866,7 @@ export default function HomeScreen() {
                     <View style={styles.wordComparisonSection}>
                       <Text style={styles.wordComparisonSectionTitle}>早口でも明瞭さを保てた言葉</Text>
                       {wordSpeedComparison.maintained.map((item) => (
-                        <View key={`maintained-${item.word}`} style={styles.wordComparisonRow}>
+                        <View key={`maintained-${item.word}-${item.focusWord}`} style={styles.wordComparisonRow}>
                           <Text style={styles.wordComparisonWord}>{item.word}</Text>
                           <View style={styles.wordComparisonScores}>
                             <View style={[styles.wordScore, { backgroundColor: wordScoreColors(item.naturalScore).backgroundColor }]}><Text style={styles.wordScoreLabel}>通常</Text><Text style={[styles.wordScoreValue, { color: wordScoreColors(item.naturalScore).color }]}>{item.naturalScore}</Text></View>
@@ -841,7 +877,7 @@ export default function HomeScreen() {
                       ))}
                     </View>
                   )}
-                  <Text style={styles.wordComparisonFootnote}>文章一致度が70点未満の測定と、照合上「脱落」とされた語は比較から除いています。</Text>
+                  <Text style={styles.wordComparisonFootnote}>一文字の助詞や語尾は、練習しやすいよう前後を含むまとまりで表示しています。点数は、その中でAzureが採点した対象部分の発音精度です。文章一致度が70点未満の測定と、照合上「脱落」とされた語は比較から除いています。</Text>
                 </View>
               )}
 
@@ -1308,6 +1344,8 @@ const styles = StyleSheet.create({
   wordComparisonSectionTitle: { color: colors.ink, fontSize: 13, fontWeight: '800', marginBottom: 2 },
   wordComparisonRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: '#EDF1EF', paddingTop: 9 },
   wordComparisonWord: { color: colors.ink, fontSize: 15, fontWeight: '800', minWidth: 80 },
+  wordComparisonGuidance: { flex: 1, minWidth: 180 },
+  wordComparisonTip: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 3 },
   wordComparisonScores: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
   wordScore: { minWidth: 64, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 5 },
   wordScoreLabel: { color: colors.muted, fontSize: 9, fontWeight: '700' },
