@@ -9,8 +9,24 @@
   },
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/assessment",
       "destination": "/api/index"
+    },
+    {
+      "source": "/diagnosis",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/check",
+      "destination": "/check.html"
+    },
+    {
+      "source": "/drills",
+      "destination": "/drills.html"
+    },
+    {
+      "source": "/history",
+      "destination": "/history.html"
     }
   ]
 }
