@@ -152,8 +152,11 @@ export async function POST(request: Request) {
       instructions:
         'あなたは日本語の発話トレーニング結果を説明するコーチです。入力には3つの例文について自然な速さと早口の計6測定が入っています。入力された測定値だけを根拠に、親しみやすく簡潔な日本語で総合診断してください。点数を新しく作らず、医学的診断をせず、文章一致度が低い測定は断定的に評価しないでください。3組を横断して、速くしても明瞭さが保たれたか、例文によるばらつきがあるかを説明してください。音の傾向はfocusSoundsと低評価語を根拠にし、複数の測定で繰り返した場合を重視してください。一度だけ低かった語や音は可能性として表現してください。安定性は速度変動率、平均流暢さ、0.6秒以上の語間の数だけを根拠に説明し、音量や声の高さについて推測しないでください。最後に今回もっとも優先すべきドリルを1つだけ選び、recommendedDrillIdには sibilants, consonants, mora, endings, connections, rhythm, pauses, speed のいずれかを入れてください。recommendedDrillReasonは測定結果に基づく短い理由にしてください。',
       input: JSON.stringify(payload),
-      max_output_tokens: 900,
+      // This budget includes both reasoning and visible output tokens.
+      // The previous 900-token limit could truncate the strict JSON response.
+      max_output_tokens: 2400,
       text: {
+        verbosity: 'low',
         format: {
           type: 'json_schema',
           name: 'speech_fitness_diagnosis',
@@ -171,6 +174,14 @@ export async function POST(request: Request) {
       { error: apiError?.message || '生成AIから診断を取得できませんでした。' },
       { status: openAIResponse.status }
     );
+  }
+
+  if (responseBody.status === 'incomplete') {
+    const incompleteDetails = responseBody.incomplete_details as { reason?: string } | undefined;
+    const message = incompleteDetails?.reason === 'max_output_tokens'
+      ? 'AI診断の文章が長くなり、生成上限に達しました。もう一度作成してください。'
+      : 'AI診断の生成が完了しませんでした。もう一度作成してください。';
+    return Response.json({ error: message }, { status: 502 });
   }
 
   const outputText = extractOutputText(responseBody);
