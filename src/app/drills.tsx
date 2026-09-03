@@ -63,7 +63,7 @@ export default function DrillsScreen(){
       {params.source==='diagnosis'&&<View style={styles.diagnosisBanner}><Text style={styles.diagnosisBannerTitle}>AI診断からのおすすめ</Text><Text style={styles.diagnosisBannerText}>今回の診断結果を優先して選んだドリルです。</Text></View>}
       <View style={styles.practiceMeterCard}>
         <View style={[styles.practiceMeter,{backgroundColor:progressGreen}]}><Text style={styles.practiceMeterValue}>{completedSentences}</Text><Text style={styles.practiceMeterUnit}>文</Text></View>
-        <View style={styles.practiceMeterCopy}><Text style={styles.practiceMeterTitle}>今日の練習メーター</Text><Text style={styles.practiceMeterText}>{completedSentences===0?'最初の1文から始めましょう。':phase==='complete'?'3文完了。今日の練習を記録しました。':`${completedSentences}文完了。続けるほど円が濃くなります。`}</Text></View>
+        <View style={styles.practiceMeterCopy}><Text style={styles.practiceMeterTitle}>今日の練習メーター</Text><Text style={styles.practiceMeterText}>{completedSentences===0?`10文・約3分。最初の1文から始めましょう。`:phase==='complete'?`${active.sentences.length}文完了。今日の練習を記録しました。`:`${completedSentences}文完了。続けるほど円が濃くなります。`}</Text></View>
       </View>
       {phase==='complete'?<View style={styles.completeCard}><Text style={styles.completeMark}>✓</Text><Text style={styles.completeTitle}>今日のドリル完了</Text><Text style={styles.completeValue}>{completedSentences}文・約{Math.max(1,Math.round(completedSeconds/60))}分</Text><Text style={styles.completeNote}>今日の発話カレンダーに記録しました。</Text><Link href="/" asChild><Pressable style={styles.primary}><Text style={styles.primaryText}>ホームへ戻る</Text></Pressable></Link></View>:
       <View style={styles.practiceCard}>
