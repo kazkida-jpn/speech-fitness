@@ -480,14 +480,6 @@ export default function DrillsScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.cream },
   container: { width: '100%', maxWidth: 820, alignSelf: 'center', padding: 22, paddingBottom: 50 },
-  topbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 25,
-  },
-  back: { color: colors.green, fontSize: 13, fontWeight: '700' },
-  logo: { color: colors.ink, fontSize: 19, fontWeight: '800' },
   hero: { color: colors.ink, fontSize: 27, lineHeight: 35, fontWeight: '800' },
   intro: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 7, marginBottom: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

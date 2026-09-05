@@ -7,7 +7,7 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import type { RecordingInput } from 'expo-audio';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -393,7 +393,7 @@ function deduplicateInputs(inputs: RecordingInput[]) {
   return Array.from(uniqueInputs.values());
 }
 
-export default function HomeScreen() {
+export default function CheckScreen() {
   const router = useRouter();
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 100);
@@ -1384,7 +1384,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 48,
   },
-  homeLink: { color: colors.green, fontSize: 12, fontWeight: '700', marginBottom: 10 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1491,7 +1490,6 @@ const styles = StyleSheet.create({
   },
   resultLabel: { color: colors.muted, fontSize: 12, fontWeight: '700' },
   resultTime: { color: colors.ink, fontSize: 23, fontWeight: '800', marginTop: 3 },
-  resultTotal: { color: colors.muted, fontSize: 11, marginTop: 2 },
   resultMic: { color: colors.muted, fontSize: 10, marginTop: 3, maxWidth: 360 },
   playButton: {
     backgroundColor: colors.white,

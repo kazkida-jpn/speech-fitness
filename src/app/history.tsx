@@ -8,7 +8,7 @@ import { getDrillHistory, isHistoryUserSignedIn } from '@/lib/progress';
 
 export default function HistoryScreen() {
   const [rows, setRows] = useState<
-    Array<{ date: string; seconds: number; sentences: number; drills: string[] }>
+    { date: string; seconds: number; sentences: number; drills: string[] }[]
   >([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
   useFocusEffect(
@@ -88,7 +88,6 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F6F3EC' },
   container: { width: '100%', maxWidth: 720, alignSelf: 'center', padding: 22 },
-  back: { color: '#187A64', fontSize: 13, fontWeight: '700' },
   title: { color: '#19312D', fontSize: 28, fontWeight: '800', marginTop: 22 },
   note: { color: '#60726E', fontSize: 13, lineHeight: 21, marginTop: 6 },
   empty: {

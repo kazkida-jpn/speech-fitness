@@ -163,7 +163,7 @@ export const DRILLS: Drill[] = [
 ];
 
 export function recommendDrills(text: string) {
-  const rules: Array<[RegExp, string]> = [
+  const rules: [RegExp, string][] = [
     [/サ行|ザ行|シ|ジ|チ|ツ|ずつ/, 'sibilants'],
     [/カ行|ガ行|タ行|ダ行|パ行|バ行|ラ行|子音/, 'consonants'],
     [/長音|促音|撥音|切符|音の長さ/, 'mora'],

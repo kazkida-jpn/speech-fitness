@@ -14,7 +14,7 @@ type AzureWord = {
 type AzureResult = {
   RecognitionStatus?: string;
   DisplayText?: string;
-  NBest?: Array<{
+  NBest?: {
     Display?: string;
     PronunciationAssessment?: {
       PronScore?: number;
@@ -24,7 +24,7 @@ type AzureResult = {
       ProsodyScore?: number;
     };
     Words?: AzureWord[];
-  }>;
+  }[];
 };
 
 const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
