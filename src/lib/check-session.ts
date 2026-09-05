@@ -2,6 +2,13 @@
 // fast as clarity allows, giving six takes numbered 1..6.
 
 export const SENTENCE_COUNT = 3;
+
+/**
+ * Longest take accepted for cloud assessment. A sentence takes well under 15 seconds even
+ * when read slowly; the margin covers the warm-up and the pauses before and after reading.
+ * Bounds the Azure cost per request and the size of what the API route accepts.
+ */
+export const MAX_TAKE_SECONDS = 30;
 export const TAKE_NUMBERS = [1, 2, 3, 4, 5, 6] as const;
 export type TakeNumber = (typeof TAKE_NUMBERS)[number];
 

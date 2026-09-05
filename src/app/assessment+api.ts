@@ -2,6 +2,8 @@ import { Buffer } from 'node:buffer';
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
 
 import type { ClarityAssessment } from '@/lib/assessment-types';
+import { MAX_TAKE_SECONDS } from '@/lib/check-session';
+import { ASSESSMENT_SAMPLE_RATE } from '@/lib/wav';
 
 type AzureWord = {
   Word?: string;
@@ -29,7 +31,8 @@ type AzureResult = {
   }[];
 };
 
-const MAX_AUDIO_BYTES = 12 * 1024 * 1024;
+// 16-bit mono PCM at the assessment sample rate, plus the WAV header and a little slack.
+const MAX_AUDIO_BYTES = 44 + (MAX_TAKE_SECONDS + 2) * ASSESSMENT_SAMPLE_RATE * 2;
 
 export async function POST(request: Request) {
   const speechKey = process.env.AZURE_SPEECH_KEY;
@@ -51,7 +54,10 @@ export async function POST(request: Request) {
     return Response.json({ error: '録音または基準文がありません。' }, { status: 400 });
   }
   if (audio.size > MAX_AUDIO_BYTES) {
-    return Response.json({ error: '録音データが大きすぎます。' }, { status: 413 });
+    return Response.json(
+      { error: `録音が長すぎます。1回の録音は${MAX_TAKE_SECONDS}秒以内にしてください。` },
+      { status: 413 }
+    );
   }
 
   let recognizer: speechsdk.SpeechRecognizer | null = null;

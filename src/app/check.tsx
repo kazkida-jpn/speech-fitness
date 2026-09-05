@@ -20,6 +20,7 @@ import { useTakeRecorder } from '@/hooks/use-take-recorder';
 import { requestAssessment, requestDiagnosis } from '@/lib/api-client';
 import type { AiDiagnosis, ClarityAssessment } from '@/lib/assessment-types';
 import {
+  MAX_TAKE_SECONDS,
   SENTENCE_COUNT,
   TAKE_NUMBERS,
   createTestSet,
@@ -83,6 +84,13 @@ export default function CheckScreen() {
       const recording = await takeRecorder.stop();
       if (!recording) {
         setErrorMessage('録音データを作成できませんでした。もう一度録音してください。');
+        setStepPhase('ready');
+        return;
+      }
+      if (recording.recordingDurationMillis > MAX_TAKE_SECONDS * 1000) {
+        setErrorMessage(
+          `録音が${MAX_TAKE_SECONDS}秒を超えました。読み終えたらすぐに「録音を終了する」を押して、もう一度録音してください。`
+        );
         setStepPhase('ready');
         return;
       }
