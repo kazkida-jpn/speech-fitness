@@ -230,7 +230,8 @@ function coefficientOfVariation(values: number[]) {
   if (values.length === 0) return null;
   const average = values.reduce((total, value) => total + value, 0) / values.length;
   if (average === 0) return null;
-  const variance = values.reduce((total, value) => total + (value - average) ** 2, 0) / values.length;
+  const variance =
+    values.reduce((total, value) => total + (value - average) ** 2, 0) / values.length;
   return Math.round((Math.sqrt(variance) / average) * 100);
 }
 
@@ -240,7 +241,8 @@ function countLongPauses(result: ClarityAssessment) {
     .sort((left, right) => left.offsetSeconds - right.offsetSeconds);
   let pauses = 0;
   for (let index = 1; index < spokenWords.length; index += 1) {
-    const previousEnd = spokenWords[index - 1].offsetSeconds + spokenWords[index - 1].durationSeconds;
+    const previousEnd =
+      spokenWords[index - 1].offsetSeconds + spokenWords[index - 1].durationSeconds;
     if (spokenWords[index].offsetSeconds - previousEnd >= 0.6) pauses += 1;
   }
   return pauses;
@@ -251,8 +253,32 @@ function normalizeComparedWord(word: string) {
 }
 
 const CONTEXT_DEPENDENT_WORDS = new Set([
-  'は', 'が', 'を', 'に', 'へ', 'と', 'で', 'の', 'も', 'や', 'か', 'ね', 'よ', 'て', 'し',
-  'です', 'ます', 'でした', 'ました', 'ません', 'ない', 'たい', 'れる', 'られる', 'せる', 'させる',
+  'は',
+  'が',
+  'を',
+  'に',
+  'へ',
+  'と',
+  'で',
+  'の',
+  'も',
+  'や',
+  'か',
+  'ね',
+  'よ',
+  'て',
+  'し',
+  'です',
+  'ます',
+  'でした',
+  'ました',
+  'ません',
+  'ない',
+  'たい',
+  'れる',
+  'られる',
+  'せる',
+  'させる',
 ]);
 
 function needsSpeakingContext(word: string) {
@@ -286,14 +312,18 @@ function compareWordsBySpeed(results: Partial<Record<number, ClarityAssessment>>
   for (let sentenceIndex = 0; sentenceIndex < 3; sentenceIndex += 1) {
     const natural = results[sentenceIndex * 2 + 1];
     const fast = results[sentenceIndex * 2 + 2];
-    if (!natural || !fast || natural.completenessScore < 70 || fast.completenessScore < 70) continue;
+    if (!natural || !fast || natural.completenessScore < 70 || fast.completenessScore < 70)
+      continue;
 
     const availableFastWords = fast.words.map((word, index) => ({ word, index, used: false }));
     natural.words.forEach((naturalWord, naturalIndex) => {
       const normalized = normalizeComparedWord(naturalWord.word);
       if (!normalized || naturalWord.errorType === 'Omission') return;
       const matched = availableFastWords.find(
-        (candidate) => !candidate.used && candidate.word.errorType !== 'Omission' && normalizeComparedWord(candidate.word.word) === normalized
+        (candidate) =>
+          !candidate.used &&
+          candidate.word.errorType !== 'Omission' &&
+          normalizeComparedWord(candidate.word.word) === normalized
       );
       if (!matched) return;
       matched.used = true;
@@ -315,7 +345,10 @@ function compareWordsBySpeed(results: Partial<Record<number, ClarityAssessment>>
   });
   const unique = Array.from(mostRelevantByWord.values());
   return {
-    declined: unique.filter((item) => item.drop > 0).sort((left, right) => right.drop - left.drop).slice(0, 3),
+    declined: unique
+      .filter((item) => item.drop > 0)
+      .sort((left, right) => right.drop - left.drop)
+      .slice(0, 3),
     maintained: unique
       .filter((item) => item.naturalScore >= 80 && item.fastScore >= 80 && item.drop <= 5)
       .sort((left, right) => right.fastScore - left.fastScore || left.drop - right.drop)
@@ -382,12 +415,16 @@ export default function HomeScreen() {
   const [selectedInputUid, setSelectedInputUid] = useState<string | null>(null);
   const [isLoadingInputs, setIsLoadingInputs] = useState(false);
   const [isInputListOpen, setIsInputListOpen] = useState(false);
-  const [clarityResults, setClarityResults] = useState<Partial<Record<number, ClarityAssessment>>>({});
+  const [clarityResults, setClarityResults] = useState<Partial<Record<number, ClarityAssessment>>>(
+    {}
+  );
   const [isAnalyzingClarity, setIsAnalyzingClarity] = useState(false);
   const [aiDiagnosis, setAiDiagnosis] = useState<AiDiagnosis | null>(null);
   const [isCreatingDiagnosis, setIsCreatingDiagnosis] = useState(false);
   const [diagnosisError, setDiagnosisError] = useState<string | null>(null);
-  const [microphonePreference, setMicrophonePreference] = useState<MicrophonePreference | null>(null);
+  const [microphonePreference, setMicrophonePreference] = useState<MicrophonePreference | null>(
+    null
+  );
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
   useEffect(() => {
@@ -544,7 +581,9 @@ export default function HomeScreen() {
       if (recorder.getStatus().isRecording) {
         await recorder.stop().catch(() => undefined);
       }
-      setErrorMessage('録音を開始できませんでした。マイクの接続を確認して、もう一度お試しください。');
+      setErrorMessage(
+        '録音を開始できませんでした。マイクの接続を確認して、もう一度お試しください。'
+      );
       setPhase('ready');
     }
   };
@@ -676,7 +715,10 @@ export default function HomeScreen() {
         takeNumbers.map((takeNumber) => {
           const sentenceIndex = Math.floor((takeNumber - 1) / 2);
           const take = takes[takeNumber] as RecordedTake;
-          return sessionTexts[sentenceIndex].replace(/[、。！？\s]/g, '').length / (take.durationMillis / 1000);
+          return (
+            sessionTexts[sentenceIndex].replace(/[、。！？\s]/g, '').length /
+            (take.durationMillis / 1000)
+          );
         });
       const averageScore = (takeNumbers: number[], field: 'fluencyScore') =>
         Math.round(
@@ -710,11 +752,13 @@ export default function HomeScreen() {
             naturalAverageFluency: averageScore(naturalTakeNumbers, 'fluencyScore'),
             fastAverageFluency: averageScore(fastTakeNumbers, 'fluencyScore'),
             naturalLongPauseCount: naturalTakeNumbers.reduce(
-              (total, takeNumber) => total + countLongPauses(results[takeNumber] as ClarityAssessment),
+              (total, takeNumber) =>
+                total + countLongPauses(results[takeNumber] as ClarityAssessment),
               0
             ),
             fastLongPauseCount: fastTakeNumbers.reduce(
-              (total, takeNumber) => total + countLongPauses(results[takeNumber] as ClarityAssessment),
+              (total, takeNumber) =>
+                total + countLongPauses(results[takeNumber] as ClarityAssessment),
               0
             ),
           },
@@ -753,17 +797,19 @@ export default function HomeScreen() {
   );
   const validSpeedChanges = pairSpeedChanges.filter((value): value is number => value !== null);
   const averageSpeedChange = validSpeedChanges.length
-    ? Math.round(validSpeedChanges.reduce((total, value) => total + value, 0) / validSpeedChanges.length)
+    ? Math.round(
+        validSpeedChanges.reduce((total, value) => total + value, 0) / validSpeedChanges.length
+      )
     : null;
   const recommendedDrill = aiDiagnosis
-    ? DRILLS.find((drill) => drill.id === aiDiagnosis.recommendedDrillId) ?? null
+    ? (DRILLS.find((drill) => drill.id === aiDiagnosis.recommendedDrillId) ?? null)
     : null;
   const wordSpeedComparison = compareWordsBySpeed(clarityResults);
   const displayedDuration =
     phase === 'recording'
       ? Math.max(0, (recorderState.durationMillis ?? 0) - speechOffsetMillisRef.current)
       : phase === 'recorded'
-        ? takes[currentTakeNumber]?.durationMillis ?? 0
+        ? (takes[currentTakeNumber]?.durationMillis ?? 0)
         : 0;
 
   return (
@@ -838,24 +884,64 @@ export default function HomeScreen() {
                 </Text>
               </View>
 
-              {(wordSpeedComparison.declined.length > 0 || wordSpeedComparison.maintained.length > 0) && (
+              {(wordSpeedComparison.declined.length > 0 ||
+                wordSpeedComparison.maintained.length > 0) && (
                 <View style={styles.wordComparisonCard}>
                   <Text style={styles.wordComparisonEyebrow}>言葉ごとの明瞭さ × 速度</Text>
                   <Text style={styles.wordComparisonTitle}>早口で変化した言葉</Text>
-                  <Text style={styles.wordComparisonNote}>同じ言葉の発音精度を比べ、変化が大きい順に表示しています。</Text>
+                  <Text style={styles.wordComparisonNote}>
+                    同じ言葉の発音精度を比べ、変化が大きい順に表示しています。
+                  </Text>
                   {wordSpeedComparison.declined.length > 0 && (
                     <View style={styles.wordComparisonSection}>
-                      <Text style={styles.wordComparisonSectionTitle}>早口で低下が大きかった言葉</Text>
+                      <Text style={styles.wordComparisonSectionTitle}>
+                        早口で低下が大きかった言葉
+                      </Text>
                       {wordSpeedComparison.declined.map((item) => (
-                        <View key={`declined-${item.word}-${item.focusWord}`} style={styles.wordComparisonRow}>
+                        <View
+                          key={`declined-${item.word}-${item.focusWord}`}
+                          style={styles.wordComparisonRow}>
                           <View style={styles.wordComparisonGuidance}>
                             <Text style={styles.wordComparisonWord}>{item.word}</Text>
-                            <Text style={styles.wordComparisonTip}>「{item.word}」をひとまとまりで、最後まで音を残して読んでみましょう。</Text>
+                            <Text style={styles.wordComparisonTip}>
+                              「{item.word}」をひとまとまりで、最後まで音を残して読んでみましょう。
+                            </Text>
                           </View>
                           <View style={styles.wordComparisonScores}>
-                            <View style={[styles.wordScore, { backgroundColor: wordScoreColors(item.naturalScore).backgroundColor }]}><Text style={styles.wordScoreLabel}>通常</Text><Text style={[styles.wordScoreValue, { color: wordScoreColors(item.naturalScore).color }]}>{item.naturalScore}</Text></View>
+                            <View
+                              style={[
+                                styles.wordScore,
+                                {
+                                  backgroundColor: wordScoreColors(item.naturalScore)
+                                    .backgroundColor,
+                                },
+                              ]}>
+                              <Text style={styles.wordScoreLabel}>通常</Text>
+                              <Text
+                                style={[
+                                  styles.wordScoreValue,
+                                  { color: wordScoreColors(item.naturalScore).color },
+                                ]}>
+                                {item.naturalScore}
+                              </Text>
+                            </View>
                             <Text style={styles.wordComparisonArrow}>→</Text>
-                            <View style={[styles.wordScore, { backgroundColor: wordScoreColors(item.fastScore).backgroundColor }]}><Text style={styles.wordScoreLabel}>早口</Text><Text style={[styles.wordScoreValue, { color: wordScoreColors(item.fastScore).color }]}>{item.fastScore}</Text></View>
+                            <View
+                              style={[
+                                styles.wordScore,
+                                {
+                                  backgroundColor: wordScoreColors(item.fastScore).backgroundColor,
+                                },
+                              ]}>
+                              <Text style={styles.wordScoreLabel}>早口</Text>
+                              <Text
+                                style={[
+                                  styles.wordScoreValue,
+                                  { color: wordScoreColors(item.fastScore).color },
+                                ]}>
+                                {item.fastScore}
+                              </Text>
+                            </View>
                             <Text style={styles.wordDrop}>−{item.drop}</Text>
                           </View>
                         </View>
@@ -864,20 +950,57 @@ export default function HomeScreen() {
                   )}
                   {wordSpeedComparison.maintained.length > 0 && (
                     <View style={styles.wordComparisonSection}>
-                      <Text style={styles.wordComparisonSectionTitle}>早口でも明瞭さを保てた言葉</Text>
+                      <Text style={styles.wordComparisonSectionTitle}>
+                        早口でも明瞭さを保てた言葉
+                      </Text>
                       {wordSpeedComparison.maintained.map((item) => (
-                        <View key={`maintained-${item.word}-${item.focusWord}`} style={styles.wordComparisonRow}>
+                        <View
+                          key={`maintained-${item.word}-${item.focusWord}`}
+                          style={styles.wordComparisonRow}>
                           <Text style={styles.wordComparisonWord}>{item.word}</Text>
                           <View style={styles.wordComparisonScores}>
-                            <View style={[styles.wordScore, { backgroundColor: wordScoreColors(item.naturalScore).backgroundColor }]}><Text style={styles.wordScoreLabel}>通常</Text><Text style={[styles.wordScoreValue, { color: wordScoreColors(item.naturalScore).color }]}>{item.naturalScore}</Text></View>
+                            <View
+                              style={[
+                                styles.wordScore,
+                                {
+                                  backgroundColor: wordScoreColors(item.naturalScore)
+                                    .backgroundColor,
+                                },
+                              ]}>
+                              <Text style={styles.wordScoreLabel}>通常</Text>
+                              <Text
+                                style={[
+                                  styles.wordScoreValue,
+                                  { color: wordScoreColors(item.naturalScore).color },
+                                ]}>
+                                {item.naturalScore}
+                              </Text>
+                            </View>
                             <Text style={styles.wordComparisonArrow}>→</Text>
-                            <View style={[styles.wordScore, { backgroundColor: wordScoreColors(item.fastScore).backgroundColor }]}><Text style={styles.wordScoreLabel}>早口</Text><Text style={[styles.wordScoreValue, { color: wordScoreColors(item.fastScore).color }]}>{item.fastScore}</Text></View>
+                            <View
+                              style={[
+                                styles.wordScore,
+                                {
+                                  backgroundColor: wordScoreColors(item.fastScore).backgroundColor,
+                                },
+                              ]}>
+                              <Text style={styles.wordScoreLabel}>早口</Text>
+                              <Text
+                                style={[
+                                  styles.wordScoreValue,
+                                  { color: wordScoreColors(item.fastScore).color },
+                                ]}>
+                                {item.fastScore}
+                              </Text>
+                            </View>
                           </View>
                         </View>
                       ))}
                     </View>
                   )}
-                  <Text style={styles.wordComparisonFootnote}>一文字の助詞や語尾は、練習しやすいよう前後を含むまとまりで表示しています。点数は、その中でAzureが採点した対象部分の発音精度です。文章一致度が70点未満の測定と、照合上「脱落」とされた語は比較から除いています。</Text>
+                  <Text style={styles.wordComparisonFootnote}>
+                    一文字の助詞や語尾は、練習しやすいよう前後を含むまとまりで表示しています。点数は、その中でAzureが採点した対象部分の発音精度です。文章一致度が70点未満の測定と、照合上「脱落」とされた語は比較から除いています。
+                  </Text>
                 </View>
               )}
 
@@ -896,15 +1019,22 @@ export default function HomeScreen() {
                 return (
                   <View key={takeNumber} style={styles.clarityCard}>
                     <Text style={styles.clarityLabel}>
-                      例文 {Math.ceil(takeNumber / 2)}・{takeNumber % 2 === 1 ? '自然な速さ' : 'できるだけ速く'}
+                      例文 {Math.ceil(takeNumber / 2)}・
+                      {takeNumber % 2 === 1 ? '自然な速さ' : 'できるだけ速く'}
                     </Text>
                     <Text style={styles.clarityScore}>
                       {Math.round(result.pronunciationScore)} / 100
                     </Text>
                     <View style={styles.scoreGrid}>
-                      <Text style={styles.scoreItem}>発音精度 {Math.round(result.accuracyScore)} / 100</Text>
-                      <Text style={styles.scoreItem}>流暢さ {Math.round(result.fluencyScore)} / 100</Text>
-                      <Text style={styles.scoreItem}>文章一致度 {Math.round(result.completenessScore)} / 100</Text>
+                      <Text style={styles.scoreItem}>
+                        発音精度 {Math.round(result.accuracyScore)} / 100
+                      </Text>
+                      <Text style={styles.scoreItem}>
+                        流暢さ {Math.round(result.fluencyScore)} / 100
+                      </Text>
+                      <Text style={styles.scoreItem}>
+                        文章一致度 {Math.round(result.completenessScore)} / 100
+                      </Text>
                     </View>
                     {result.completenessScore < 70 && (
                       <View style={styles.assessmentWarning}>
@@ -919,20 +1049,25 @@ export default function HomeScreen() {
                       {result.recognizedText || '認識結果の文章がありません'}
                     </Text>
                     <Text style={styles.unclearTitle}>
-                      {unclearWords.length > 0 ? '聞き取りにくかった可能性のある語' : '目立って不明瞭な語はありません'}
+                      {unclearWords.length > 0
+                        ? '聞き取りにくかった可能性のある語'
+                        : '目立って不明瞭な語はありません'}
                     </Text>
                     {unclearWords.length > 0 && (
                       <View style={styles.wordList}>
                         {unclearWords.map((word, index) => (
                           <View key={`${word.word}-${index}`} style={styles.wordChip}>
-                            <Text style={styles.wordChipText}>{word.word || '（脱落）'} {Math.round(word.accuracyScore)}点</Text>
+                            <Text style={styles.wordChipText}>
+                              {word.word || '（脱落）'} {Math.round(word.accuracyScore)}点
+                            </Text>
                           </View>
                         ))}
                       </View>
                     )}
                     {omittedWords.length > 0 && (
                       <Text style={styles.omissionNote}>
-                        Azureが提示文と対応付けられなかった語が {omittedWords.length} 個あります。これは発音0点ではなく、照合上の脱落扱いです。
+                        Azureが提示文と対応付けられなかった語が {omittedWords.length}{' '}
+                        個あります。これは発音0点ではなく、照合上の脱落扱いです。
                       </Text>
                     )}
                     <Text style={styles.clarityNote}>
@@ -962,7 +1097,9 @@ export default function HomeScreen() {
                         <View style={styles.aiDiagnosisSection}>
                           <Text style={styles.aiDiagnosisSectionTitle}>今回の強み</Text>
                           {aiDiagnosis.strengths.map((item, index) => (
-                            <Text key={`strength-${index}`} style={styles.aiDiagnosisItem}>・{item}</Text>
+                            <Text key={`strength-${index}`} style={styles.aiDiagnosisItem}>
+                              ・{item}
+                            </Text>
                           ))}
                         </View>
                       )}
@@ -970,7 +1107,9 @@ export default function HomeScreen() {
                         <View style={styles.aiDiagnosisSection}>
                           <Text style={styles.aiDiagnosisSectionTitle}>気をつけるポイント</Text>
                           {aiDiagnosis.cautions.map((item, index) => (
-                            <Text key={`caution-${index}`} style={styles.aiDiagnosisItem}>・{item}</Text>
+                            <Text key={`caution-${index}`} style={styles.aiDiagnosisItem}>
+                              ・{item}
+                            </Text>
                           ))}
                         </View>
                       )}
@@ -978,7 +1117,9 @@ export default function HomeScreen() {
                         <View style={styles.aiDiagnosisSection}>
                           <Text style={styles.aiDiagnosisSectionTitle}>音の傾向</Text>
                           {aiDiagnosis.soundTendencies.map((item, index) => (
-                            <Text key={`sound-${index}`} style={styles.aiDiagnosisItem}>・{item}</Text>
+                            <Text key={`sound-${index}`} style={styles.aiDiagnosisItem}>
+                              ・{item}
+                            </Text>
                           ))}
                         </View>
                       )}
@@ -993,24 +1134,41 @@ export default function HomeScreen() {
                       {recommendedDrill && (
                         <View style={styles.recommendedDrillCard}>
                           <View style={styles.recommendedDrillHeader}>
-                            <Text style={styles.recommendedDrillEyebrow}>AIが最優先に選んだドリル</Text>
+                            <Text style={styles.recommendedDrillEyebrow}>
+                              AIが最優先に選んだドリル
+                            </Text>
                             <Text style={styles.premiumBadge}>プレミアム</Text>
                           </View>
                           <Text style={styles.recommendedDrillTitle}>{recommendedDrill.title}</Text>
-                          <Text style={styles.recommendedDrillReason}>{aiDiagnosis.recommendedDrillReason}</Text>
-                          <Pressable style={styles.recommendedDrillButton} onPress={() => setIsPaywallOpen(true)}>
-                            <Text style={styles.recommendedDrillButtonText}>このドリルを始める</Text>
+                          <Text style={styles.recommendedDrillReason}>
+                            {aiDiagnosis.recommendedDrillReason}
+                          </Text>
+                          <Pressable
+                            style={styles.recommendedDrillButton}
+                            onPress={() => setIsPaywallOpen(true)}>
+                            <Text style={styles.recommendedDrillButtonText}>
+                              このドリルを始める
+                            </Text>
                           </Pressable>
                         </View>
                       )}
                       {isPaywallOpen && recommendedDrill && (
                         <View style={styles.paywallCard}>
                           <Text style={styles.paywallTitle}>診断に合わせた練習を続ける</Text>
-                          <Text style={styles.paywallText}>推奨ドリル、練習履歴、週次レポートは有料プランで提供予定です。現在は体験版として利用できます。</Text>
+                          <Text style={styles.paywallText}>
+                            推奨ドリル、練習履歴、週次レポートは有料プランで提供予定です。現在は体験版として利用できます。
+                          </Text>
                           <Pressable
                             style={styles.recommendedDrillButton}
-                            onPress={() => router.push({ pathname: '/drills', params: { drill: recommendedDrill.id, source: 'diagnosis' } })}>
-                            <Text style={styles.recommendedDrillButtonText}>体験版でドリルへ進む</Text>
+                            onPress={() =>
+                              router.push({
+                                pathname: '/drills',
+                                params: { drill: recommendedDrill.id, source: 'diagnosis' },
+                              })
+                            }>
+                            <Text style={styles.recommendedDrillButtonText}>
+                              体験版でドリルへ進む
+                            </Text>
                           </Pressable>
                           <Pressable onPress={() => setIsPaywallOpen(false)}>
                             <Text style={styles.paywallClose}>今は閉じる</Text>
@@ -1037,10 +1195,14 @@ export default function HomeScreen() {
                 <View style={styles.cloudConsentCard}>
                   <Text style={styles.cloudConsentTitle}>クラウドで明瞭さを測定</Text>
                   <Text style={styles.cloudConsentText}>
-                    6件の録音音声と3つの例文を Microsoft Azure Speech に送信して分析します。音声はこの測定結果の算出に使用します。
+                    6件の録音音声と3つの例文を Microsoft Azure Speech
+                    に送信して分析します。音声はこの測定結果の算出に使用します。
                   </Text>
                   <Pressable
-                    style={[styles.analysisButton, isAnalyzingClarity && styles.inputActionDisabled]}
+                    style={[
+                      styles.analysisButton,
+                      isAnalyzingClarity && styles.inputActionDisabled,
+                    ]}
                     onPress={analyzeClarity}
                     disabled={isAnalyzingClarity}>
                     <Text style={styles.analysisButtonText}>
@@ -1192,7 +1354,8 @@ export default function HomeScreen() {
         </View>
 
         <Text style={styles.privacyNote}>
-          録音は明瞭さ測定に同意した場合のみ Azure Speech へ送信します。APIキーはサーバー側で安全に管理します。
+          録音は明瞭さ測定に同意した場合のみ Azure Speech
+          へ送信します。APIキーはサーバー側で安全に管理します。
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -1330,37 +1493,91 @@ const styles = StyleSheet.create({
   resultTime: { color: colors.ink, fontSize: 23, fontWeight: '800', marginTop: 3 },
   resultTotal: { color: colors.muted, fontSize: 11, marginTop: 2 },
   resultMic: { color: colors.muted, fontSize: 10, marginTop: 3, maxWidth: 360 },
-  playButton: { backgroundColor: colors.white, borderRadius: 14, paddingHorizontal: 15, paddingVertical: 11 },
+  playButton: {
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+  },
   playButtonText: { color: colors.greenDark, fontSize: 14, fontWeight: '800' },
   summaryCard: { backgroundColor: colors.mint, borderRadius: 18, padding: 17, marginBottom: 18 },
   summaryLabel: { color: colors.greenDark, fontSize: 12, fontWeight: '700' },
   summaryValue: { color: colors.ink, fontSize: 21, fontWeight: '800', marginTop: 4 },
   summaryNote: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 8 },
-  wordComparisonCard: { backgroundColor: colors.white, borderRadius: 18, padding: 17, marginBottom: 18, borderWidth: 1, borderColor: colors.line },
+  wordComparisonCard: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 17,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   wordComparisonEyebrow: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
   wordComparisonTitle: { color: colors.ink, fontSize: 20, fontWeight: '800', marginTop: 3 },
   wordComparisonNote: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 5 },
   wordComparisonSection: { marginTop: 16, gap: 8 },
-  wordComparisonSectionTitle: { color: colors.ink, fontSize: 13, fontWeight: '800', marginBottom: 2 },
-  wordComparisonRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', borderTopWidth: 1, borderTopColor: '#EDF1EF', paddingTop: 9 },
+  wordComparisonSectionTitle: {
+    color: colors.ink,
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  wordComparisonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    flexWrap: 'wrap',
+    borderTopWidth: 1,
+    borderTopColor: '#EDF1EF',
+    paddingTop: 9,
+  },
   wordComparisonWord: { color: colors.ink, fontSize: 15, fontWeight: '800', minWidth: 80 },
   wordComparisonGuidance: { flex: 1, minWidth: 180 },
   wordComparisonTip: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 3 },
   wordComparisonScores: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  wordScore: { minWidth: 64, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 6, flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 5 },
+  wordScore: {
+    minWidth: 64,
+    borderRadius: 10,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 5,
+  },
   wordScoreLabel: { color: colors.muted, fontSize: 9, fontWeight: '700' },
   wordScoreValue: { fontSize: 16, fontWeight: '800' },
   wordComparisonArrow: { color: colors.muted, fontSize: 12 },
   wordDrop: { color: '#B15B23', fontSize: 13, fontWeight: '800', minWidth: 30 },
   wordComparisonFootnote: { color: colors.muted, fontSize: 9, lineHeight: 15, marginTop: 14 },
-  clarityCard: { backgroundColor: '#F1F8F5', borderRadius: 18, padding: 17, marginBottom: 12, borderWidth: 1, borderColor: colors.line },
+  clarityCard: {
+    backgroundColor: '#F1F8F5',
+    borderRadius: 18,
+    padding: 17,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
   clarityLabel: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
   clarityScore: { color: colors.ink, fontSize: 30, fontWeight: '800', marginTop: 3 },
   scoreGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  scoreItem: { color: colors.muted, fontSize: 12, backgroundColor: colors.white, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  scoreItem: {
+    color: colors.muted,
+    fontSize: 12,
+    backgroundColor: colors.white,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
   unclearTitle: { color: colors.ink, fontSize: 13, fontWeight: '800', marginTop: 13 },
   wordList: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 8 },
-  wordChip: { backgroundColor: '#FFF0ED', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },
+  wordChip: {
+    backgroundColor: '#FFF0ED',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
   wordChipText: { color: '#9A3A2A', fontSize: 12, fontWeight: '700' },
   omissionNote: { color: '#805B12', fontSize: 11, lineHeight: 17, marginTop: 9 },
   clarityNote: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 10 },
@@ -1368,19 +1585,69 @@ const styles = StyleSheet.create({
   assessmentWarningTitle: { color: '#805B12', fontSize: 12, fontWeight: '800' },
   assessmentWarningText: { color: '#805B12', fontSize: 11, lineHeight: 17, marginTop: 3 },
   recognizedLabel: { color: colors.muted, fontSize: 11, fontWeight: '700', marginTop: 13 },
-  recognizedText: { color: colors.ink, fontSize: 13, lineHeight: 21, marginTop: 4, backgroundColor: colors.white, borderRadius: 12, padding: 11 },
-  cloudConsentCard: { borderWidth: 1, borderColor: colors.line, borderRadius: 18, padding: 17, marginBottom: 18 },
+  recognizedText: {
+    color: colors.ink,
+    fontSize: 13,
+    lineHeight: 21,
+    marginTop: 4,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 11,
+  },
+  cloudConsentCard: {
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: 18,
+    padding: 17,
+    marginBottom: 18,
+  },
   cloudConsentTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
-  cloudConsentText: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 6, marginBottom: 13 },
-  analysisButton: { backgroundColor: colors.greenDark, borderRadius: 14, alignItems: 'center', paddingVertical: 13 },
+  cloudConsentText: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 19,
+    marginTop: 6,
+    marginBottom: 13,
+  },
+  analysisButton: {
+    backgroundColor: colors.greenDark,
+    borderRadius: 14,
+    alignItems: 'center',
+    paddingVertical: 13,
+  },
   analysisButtonText: { color: colors.white, fontSize: 14, fontWeight: '800' },
-  aiDiagnosisCard: { backgroundColor: '#FFF9EA', borderRadius: 18, padding: 18, marginBottom: 18, borderWidth: 1, borderColor: '#EBDCA8' },
-  aiDiagnosisHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  aiDiagnosisCard: {
+    backgroundColor: '#FFF9EA',
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#EBDCA8',
+  },
+  aiDiagnosisHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   aiDiagnosisEyebrow: { color: '#805B12', fontSize: 11, fontWeight: '800' },
   aiDiagnosisTitle: { color: colors.ink, fontSize: 20, fontWeight: '800', marginTop: 2 },
-  aiBadge: { color: '#805B12', fontSize: 10, fontWeight: '800', backgroundColor: '#FFF1BE', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 5 },
+  aiBadge: {
+    color: '#805B12',
+    fontSize: 10,
+    fontWeight: '800',
+    backgroundColor: '#FFF1BE',
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
   aiDiagnosisLoading: { color: colors.muted, fontSize: 13, lineHeight: 21, marginTop: 16 },
-  aiDiagnosisHeadline: { color: colors.ink, fontSize: 19, lineHeight: 27, fontWeight: '800', marginTop: 16 },
+  aiDiagnosisHeadline: {
+    color: colors.ink,
+    fontSize: 19,
+    lineHeight: 27,
+    fontWeight: '800',
+    marginTop: 16,
+  },
   aiDiagnosisSummary: { color: colors.ink, fontSize: 13, lineHeight: 22, marginTop: 8 },
   aiDiagnosisSection: { marginTop: 14 },
   aiDiagnosisSectionTitle: { color: '#805B12', fontSize: 12, fontWeight: '800', marginBottom: 4 },
@@ -1388,20 +1655,66 @@ const styles = StyleSheet.create({
   practiceBox: { backgroundColor: colors.white, borderRadius: 13, padding: 13, marginTop: 15 },
   practiceLabel: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
   practiceText: { color: colors.ink, fontSize: 12, lineHeight: 20, marginTop: 4 },
-  recommendedDrillCard: { backgroundColor: '#F1F8F5', borderRadius: 15, padding: 15, marginTop: 14, borderWidth: 1, borderColor: colors.line },
-  recommendedDrillHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  recommendedDrillCard: {
+    backgroundColor: '#F1F8F5',
+    borderRadius: 15,
+    padding: 15,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  recommendedDrillHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   recommendedDrillEyebrow: { color: colors.greenDark, fontSize: 11, fontWeight: '800' },
-  premiumBadge: { color: '#805B12', fontSize: 9, fontWeight: '800', backgroundColor: '#FFF1BE', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
+  premiumBadge: {
+    color: '#805B12',
+    fontSize: 9,
+    fontWeight: '800',
+    backgroundColor: '#FFF1BE',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
   recommendedDrillTitle: { color: colors.ink, fontSize: 17, fontWeight: '800', marginTop: 8 },
   recommendedDrillReason: { color: colors.muted, fontSize: 12, lineHeight: 19, marginTop: 5 },
-  recommendedDrillButton: { backgroundColor: colors.greenDark, borderRadius: 13, alignItems: 'center', paddingVertical: 12, marginTop: 12 },
+  recommendedDrillButton: {
+    backgroundColor: colors.greenDark,
+    borderRadius: 13,
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 12,
+  },
   recommendedDrillButtonText: { color: colors.white, fontSize: 13, fontWeight: '800' },
-  paywallCard: { backgroundColor: colors.white, borderRadius: 15, padding: 15, marginTop: 10, borderWidth: 1, borderColor: '#EBDCA8' },
+  paywallCard: {
+    backgroundColor: colors.white,
+    borderRadius: 15,
+    padding: 15,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#EBDCA8',
+  },
   paywallTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
   paywallText: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 6 },
-  paywallClose: { color: colors.muted, fontSize: 11, fontWeight: '700', textAlign: 'center', marginTop: 11 },
+  paywallClose: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 11,
+  },
   aiDiagnosisError: { color: '#B63D2C', fontSize: 12, lineHeight: 19, marginTop: 15 },
-  aiRetryButton: { borderWidth: 1, borderColor: '#C7A747', borderRadius: 12, alignItems: 'center', paddingVertical: 11, marginTop: 10 },
+  aiRetryButton: {
+    borderWidth: 1,
+    borderColor: '#C7A747',
+    borderRadius: 12,
+    alignItems: 'center',
+    paddingVertical: 11,
+    marginTop: 10,
+  },
   aiRetryButtonText: { color: '#805B12', fontSize: 12, fontWeight: '800' },
   aiDiagnosisNote: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 14 },
   inputCard: {
@@ -1437,7 +1750,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 7,
   },
-  inputListTitle: { color: colors.muted, fontSize: 11, fontWeight: '700', paddingHorizontal: 5, paddingVertical: 3 },
+  inputListTitle: {
+    color: colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+  },
   inputOption: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1471,7 +1790,13 @@ const styles = StyleSheet.create({
   inputConfirmButtonText: { color: colors.white, fontSize: 14, fontWeight: '800' },
   metricsSection: { marginTop: 28 },
   sectionTitle: { color: colors.ink, fontSize: 18, fontWeight: '800', marginBottom: 12 },
-  sectionNote: { color: colors.muted, fontSize: 13, lineHeight: 20, marginTop: -5, marginBottom: 13 },
+  sectionNote: {
+    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: -5,
+    marginBottom: 13,
+  },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   metricCard: {
     width: '48%',
@@ -1483,7 +1808,12 @@ const styles = StyleSheet.create({
     borderColor: colors.line,
   },
   metricTitle: { color: colors.greenDark, fontSize: 15, fontWeight: '800' },
-  metricTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  metricTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   pendingBadge: {
     color: colors.muted,
     fontSize: 10,
@@ -1494,5 +1824,11 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   metricBody: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
-  privacyNote: { color: colors.muted, fontSize: 12, lineHeight: 19, textAlign: 'center', marginTop: 22 },
+  privacyNote: {
+    color: colors.muted,
+    fontSize: 12,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginTop: 22,
+  },
 });

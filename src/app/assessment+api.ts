@@ -1,3 +1,6 @@
+import { Buffer } from 'node:buffer';
+import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
+
 type AzureWord = {
   Word?: string;
   Offset?: number;
@@ -98,7 +101,8 @@ export async function POST(request: Request) {
       const statusMessage: Record<string, string> = {
         InitialSilenceTimeout: 'Azureが発話開始前の無音を長すぎると判定しました。',
         BabbleTimeout: 'Azureが音声を発話ではなく雑音と判定しました。',
-        NoMatch: 'Azureは音声を受信しましたが、日本語の発話として一致する結果を得られませんでした。',
+        NoMatch:
+          'Azureは音声を受信しましたが、日本語の発話として一致する結果を得られませんでした。',
         Error: 'Azureの音声認識処理でエラーが発生しました。',
       };
       return Response.json(
@@ -128,11 +132,12 @@ export async function POST(request: Request) {
       })),
     });
   } catch {
-    return Response.json({ error: '明瞭さの評価サービスへ接続できませんでした。' }, { status: 502 });
+    return Response.json(
+      { error: '明瞭さの評価サービスへ接続できませんでした。' },
+      { status: 502 }
+    );
   } finally {
     recognizer?.close();
     audioConfig?.close();
   }
 }
-import { Buffer } from 'node:buffer';
-import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';

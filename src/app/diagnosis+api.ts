@@ -34,7 +34,17 @@ type AssessmentSummary = {
 const diagnosisSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['headline', 'summary', 'strengths', 'cautions', 'soundTendencies', 'stability', 'practice', 'recommendedDrillId', 'recommendedDrillReason'],
+  required: [
+    'headline',
+    'summary',
+    'strengths',
+    'cautions',
+    'soundTendencies',
+    'stability',
+    'practice',
+    'recommendedDrillId',
+    'recommendedDrillReason',
+  ],
   properties: {
     headline: { type: 'string' },
     summary: { type: 'string' },
@@ -45,7 +55,16 @@ const diagnosisSchema = {
     practice: { type: 'string' },
     recommendedDrillId: {
       type: 'string',
-      enum: ['sibilants', 'consonants', 'mora', 'endings', 'connections', 'rhythm', 'pauses', 'speed'],
+      enum: [
+        'sibilants',
+        'consonants',
+        'mora',
+        'endings',
+        'connections',
+        'rhythm',
+        'pauses',
+        'speed',
+      ],
     },
     recommendedDrillReason: { type: 'string' },
   },
@@ -94,7 +113,8 @@ function isStabilityMetrics(value: unknown): value is StabilityMetrics {
   if (!value || typeof value !== 'object') return false;
   const item = value as Partial<StabilityMetrics>;
   return (
-    (item.naturalRateVariationPercent === null || typeof item.naturalRateVariationPercent === 'number') &&
+    (item.naturalRateVariationPercent === null ||
+      typeof item.naturalRateVariationPercent === 'number') &&
     (item.fastRateVariationPercent === null || typeof item.fastRateVariationPercent === 'number') &&
     typeof item.naturalAverageFluency === 'number' &&
     typeof item.fastAverageFluency === 'number' &&
@@ -112,7 +132,11 @@ function extractOutputText(response: Record<string, unknown>) {
       ? (item as { content: unknown[] }).content
       : [];
     for (const part of content) {
-      if (part && typeof part === 'object' && typeof (part as { text?: unknown }).text === 'string') {
+      if (
+        part &&
+        typeof part === 'object' &&
+        typeof (part as { text?: unknown }).text === 'string'
+      ) {
         return (part as { text: string }).text;
       }
     }
@@ -178,9 +202,10 @@ export async function POST(request: Request) {
 
   if (responseBody.status === 'incomplete') {
     const incompleteDetails = responseBody.incomplete_details as { reason?: string } | undefined;
-    const message = incompleteDetails?.reason === 'max_output_tokens'
-      ? 'AI診断の文章が長くなり、生成上限に達しました。もう一度作成してください。'
-      : 'AI診断の生成が完了しませんでした。もう一度作成してください。';
+    const message =
+      incompleteDetails?.reason === 'max_output_tokens'
+        ? 'AI診断の文章が長くなり、生成上限に達しました。もう一度作成してください。'
+        : 'AI診断の生成が完了しませんでした。もう一度作成してください。';
     return Response.json({ error: message }, { status: 502 });
   }
 
