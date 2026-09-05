@@ -1,6 +1,8 @@
 import { Buffer } from 'node:buffer';
 import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
 
+import type { ClarityAssessment } from '@/lib/assessment-types';
+
 type AzureWord = {
   Word?: string;
   Offset?: number;
@@ -116,7 +118,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return Response.json({
+    const assessment: ClarityAssessment = {
       pronunciationScore: scores.PronScore ?? 0,
       accuracyScore: scores.AccuracyScore ?? 0,
       fluencyScore: scores.FluencyScore ?? 0,
@@ -130,7 +132,8 @@ export async function POST(request: Request) {
         offsetSeconds: (word.Offset ?? 0) / 10_000_000,
         durationSeconds: (word.Duration ?? 0) / 10_000_000,
       })),
-    });
+    };
+    return Response.json(assessment);
   } catch {
     return Response.json(
       { error: '明瞭さの評価サービスへ接続できませんでした。' },

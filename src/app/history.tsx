@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
+import { palette } from '@/constants/palette';
 import { DRILLS } from '@/lib/drills';
 import { getDrillHistory, isHistoryUserSignedIn } from '@/lib/progress';
 
@@ -86,29 +87,29 @@ export default function HistoryScreen() {
   );
 }
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F6F3EC' },
+  safe: { flex: 1, backgroundColor: palette.cream },
   container: { width: '100%', maxWidth: 720, alignSelf: 'center', padding: 22 },
-  title: { color: '#19312D', fontSize: 28, fontWeight: '800', marginTop: 22 },
-  note: { color: '#60726E', fontSize: 13, lineHeight: 21, marginTop: 6 },
+  title: { color: palette.ink, fontSize: 28, fontWeight: '800', marginTop: 22 },
+  note: { color: palette.muted, fontSize: 13, lineHeight: 21, marginTop: 6 },
   empty: {
-    backgroundColor: '#FFF',
+    backgroundColor: palette.white,
     borderRadius: 20,
     padding: 24,
     marginTop: 22,
     alignItems: 'center',
   },
-  emptyTitle: { color: '#19312D', fontSize: 17, fontWeight: '800' },
-  link: { color: '#187A64', fontSize: 13, fontWeight: '800', marginTop: 15 },
+  emptyTitle: { color: palette.ink, fontSize: 17, fontWeight: '800' },
+  link: { color: palette.green, fontSize: 13, fontWeight: '800', marginTop: 15 },
   list: { gap: 9, marginTop: 20 },
   row: {
-    backgroundColor: '#FFF',
+    backgroundColor: palette.white,
     borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  date: { color: '#19312D', fontSize: 14, fontWeight: '800' },
-  drills: { color: '#60726E', fontSize: 11, marginTop: 4 },
-  value: { color: '#0F5E4D', fontSize: 14, fontWeight: '800' },
+  date: { color: palette.ink, fontSize: 14, fontWeight: '800' },
+  drills: { color: palette.muted, fontSize: 11, marginTop: 4 },
+  value: { color: palette.greenDark, fontSize: 14, fontWeight: '800' },
 });

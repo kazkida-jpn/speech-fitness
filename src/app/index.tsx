@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
+import { palette } from '@/constants/palette';
 import { DRILLS } from '@/lib/drills';
 import {
   getAssessmentHistory,
@@ -12,17 +13,6 @@ import {
   localDateKey,
 } from '@/lib/progress';
 import { isSupabaseConfigured } from '@/lib/supabase';
-
-const colors = {
-  ink: '#19312D',
-  muted: '#60726E',
-  cream: '#F6F3EC',
-  white: '#FFFFFF',
-  green: '#187A64',
-  greenDark: '#0F5E4D',
-  mint: '#DDF4EA',
-  line: '#DCE6E2',
-};
 
 export default function HomeScreen() {
   const [month, setMonth] = useState(() => new Date());
@@ -175,7 +165,7 @@ export default function HomeScreen() {
               const minutes = value ? Math.max(1, Math.round(value.seconds / 60)) : 0;
               const intensity =
                 minutes >= 10
-                  ? '#187A64'
+                  ? palette.green
                   : minutes >= 6
                     ? '#4CA886'
                     : minutes >= 3
@@ -213,20 +203,20 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.cream },
+  safeArea: { flex: 1, backgroundColor: palette.cream },
   container: { width: '100%', maxWidth: 820, alignSelf: 'center', padding: 22, paddingBottom: 50 },
-  checkCard: { backgroundColor: colors.greenDark, borderRadius: 24, padding: 22 },
+  checkCard: { backgroundColor: palette.greenDark, borderRadius: 24, padding: 22 },
   checkLabel: { color: '#CBE9DD', fontSize: 12, fontWeight: '700' },
-  checkValue: { color: colors.white, fontSize: 27, fontWeight: '800', marginTop: 5 },
+  checkValue: { color: palette.white, fontSize: 27, fontWeight: '800', marginTop: 5 },
   checkNote: { color: '#E6F4EF', fontSize: 13, lineHeight: 20, marginTop: 7 },
   checkButton: {
-    backgroundColor: colors.white,
+    backgroundColor: palette.white,
     borderRadius: 14,
     alignItems: 'center',
     paddingVertical: 13,
     marginTop: 16,
   },
-  checkButtonText: { color: colors.greenDark, fontSize: 14, fontWeight: '800' },
+  checkButtonText: { color: palette.greenDark, fontSize: 14, fontWeight: '800' },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -234,30 +224,30 @@ const styles = StyleSheet.create({
     marginTop: 28,
     marginBottom: 12,
   },
-  sectionTitle: { color: colors.ink, fontSize: 19, fontWeight: '800' },
-  textLink: { color: colors.green, fontSize: 12, fontWeight: '700' },
+  sectionTitle: { color: palette.ink, fontSize: 19, fontWeight: '800' },
+  textLink: { color: palette.green, fontSize: 12, fontWeight: '700' },
   recommendGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   recommendCard: { flexGrow: 1, flexBasis: 280, borderRadius: 18, padding: 17, minHeight: 160 },
-  recommendTag: { color: colors.greenDark, fontSize: 10, fontWeight: '800' },
-  recommendTitle: { color: colors.ink, fontSize: 18, fontWeight: '800', marginTop: 5 },
-  recommendBody: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  recommendTag: { color: palette.greenDark, fontSize: 10, fontWeight: '800' },
+  recommendTitle: { color: palette.ink, fontSize: 18, fontWeight: '800', marginTop: 5 },
+  recommendBody: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
   recommendAction: {
-    color: colors.greenDark,
+    color: palette.greenDark,
     fontSize: 12,
     fontWeight: '800',
     marginTop: 'auto',
     paddingTop: 12,
   },
   calendarCard: {
-    backgroundColor: colors.white,
+    backgroundColor: palette.white,
     borderRadius: 22,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: palette.line,
   },
   loginNotice: { backgroundColor: '#FFF7D6', borderRadius: 14, padding: 14, marginBottom: 12 },
-  loginNoticeTitle: { color: colors.ink, fontSize: 13, fontWeight: '800' },
-  loginNoticeText: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 3 },
+  loginNoticeTitle: { color: palette.ink, fontSize: 13, fontWeight: '800' },
+  loginNoticeText: { color: palette.muted, fontSize: 11, lineHeight: 18, marginTop: 3 },
   monthNav: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -265,13 +255,13 @@ const styles = StyleSheet.create({
     gap: 22,
     marginBottom: 12,
   },
-  monthArrow: { color: colors.greenDark, fontSize: 28, paddingHorizontal: 8 },
-  monthTitle: { color: colors.ink, fontSize: 16, fontWeight: '800' },
+  monthArrow: { color: palette.greenDark, fontSize: 28, paddingHorizontal: 8 },
+  monthTitle: { color: palette.ink, fontSize: 16, fontWeight: '800' },
   weekRow: { flexDirection: 'row' },
   weekDay: {
     width: '14.285%',
     textAlign: 'center',
-    color: colors.muted,
+    color: palette.muted,
     fontSize: 11,
     paddingBottom: 7,
   },
@@ -285,12 +275,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCellEmpty: { width: '13.4%', aspectRatio: 1, margin: '0.44%' },
-  dayNumber: { color: colors.ink, fontSize: 11, fontWeight: '700' },
-  dayMinutes: { color: colors.greenDark, fontSize: 9, fontWeight: '800', marginTop: 2 },
-  dayTextLight: { color: colors.white },
-  monthSummary: { color: colors.muted, fontSize: 11, marginTop: 12 },
+  dayNumber: { color: palette.ink, fontSize: 11, fontWeight: '700' },
+  dayMinutes: { color: palette.greenDark, fontSize: 9, fontWeight: '800', marginTop: 2 },
+  dayTextLight: { color: palette.white },
+  monthSummary: { color: palette.muted, fontSize: 11, marginTop: 12 },
   setupNote: {
-    color: colors.muted,
+    color: palette.muted,
     fontSize: 11,
     lineHeight: 18,
     textAlign: 'center',

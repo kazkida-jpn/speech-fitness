@@ -1,112 +1,45 @@
 import {
-  RecordingPresets,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  useAudioPlayer,
   useAudioRecorder,
   useAudioRecorderState,
 } from 'expo-audio';
-import type { RecordingInput } from 'expo-audio';
 import { Link, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
+import { MicrophonePicker } from '@/components/MicrophonePicker';
+import { palette } from '@/constants/palette';
+import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
+import { useRecordingPlayback } from '@/hooks/use-recording-playback';
 import { DRILLS, type Drill } from '@/lib/drills';
-import {
-  getMicrophonePreference,
-  resolveMicrophonePreference,
-  saveMicrophonePreference,
-  type MicrophonePreference,
-} from '@/lib/microphone-preference';
 import { saveDrillHistory } from '@/lib/progress';
+import { RECORDING_OPTIONS } from '@/lib/recording-inputs';
 
-const colors = {
-  ink: '#19312D',
-  muted: '#60726E',
-  cream: '#F6F3EC',
-  white: '#FFF',
-  green: '#187A64',
-  greenDark: '#0F5E4D',
-  mint: '#DDF4EA',
-  line: '#DCE6E2',
-  coral: '#F06C55',
-};
-const RECORDING_OPTIONS = {
-  ...RecordingPresets.HIGH_QUALITY,
-  sampleRate: 48000,
-  numberOfChannels: 1,
-  bitRate: 192000,
-  web: { mimeType: 'audio/webm;codecs=opus', bitsPerSecond: 192000 },
-};
-
-const normalizeInputName = (name: string) =>
-  name
-    .replace(/^(既定|通信|default|communications?)\s*[-–—:]\s*/i, '')
-    .trim()
-    .toLocaleLowerCase();
-const isInputAlias = (input: RecordingInput) =>
-  input.type.toLocaleLowerCase() === 'default' ||
-  /^(既定|通信|default|communications?)\s*[-–—:]/i.test(input.name);
-const deduplicateInputs = (inputs: RecordingInput[]) =>
-  Array.from(
-    inputs
-      .reduce((unique, input) => {
-        const key = normalizeInputName(input.name);
-        const existing = unique.get(key);
-        if (!existing || (isInputAlias(existing) && !isInputAlias(input))) unique.set(key, input);
-        return unique;
-      }, new Map<string, RecordingInput>())
-      .values()
-  );
+type Phase = 'ready' | 'recording' | 'recorded' | 'complete';
 
 export default function DrillsScreen() {
   const params = useLocalSearchParams<{ drill?: string; source?: string }>();
-  const initial = useMemo(
-    () => DRILLS.find((item) => item.id === params.drill) ?? null,
-    [params.drill]
+  const [active, setActive] = useState<Drill | null>(
+    () => DRILLS.find((item) => item.id === params.drill) ?? null
   );
-  const [active, setActive] = useState<Drill | null>(initial);
   const [sentenceIndex, setSentenceIndex] = useState(0);
-  const [phase, setPhase] = useState<'ready' | 'recording' | 'recorded' | 'complete'>('ready');
+  const [phase, setPhase] = useState<Phase>('ready');
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [completedSentences, setCompletedSentences] = useState(0);
   const [completedSeconds, setCompletedSeconds] = useState(0);
   const [lastRecordingSeconds, setLastRecordingSeconds] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
-  const [currentInputName, setCurrentInputName] = useState('ブラウザ・端末の既定マイク');
-  const [availableInputs, setAvailableInputs] = useState<RecordingInput[]>([]);
-  const [selectedInputUid, setSelectedInputUid] = useState<string | null>(null);
-  const [isLoadingInputs, setIsLoadingInputs] = useState(false);
-  const [isInputListOpen, setIsInputListOpen] = useState(false);
-  const [microphonePreference, setMicrophonePreference] = useState<MicrophonePreference | null>(
-    null
-  );
   const [reflection, setReflection] = useState<'clear' | 'difficult' | null>(null);
   const recorder = useAudioRecorder(RECORDING_OPTIONS);
   const recorderState = useAudioRecorderState(recorder, 100);
-  const player = useAudioPlayer(null);
-  const webPlayerRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    getMicrophonePreference().then((preference) => {
-      if (!preference) return;
-      setMicrophonePreference(preference);
-      setSelectedInputUid(preference.uid);
-      setCurrentInputName(preference.name || preference.type || '既定のマイク');
-    });
-  }, []);
-  useEffect(
-    () => () => {
-      webPlayerRef.current?.pause();
-      webPlayerRef.current = null;
-    },
-    []
-  );
+  const microphone = useMicrophoneSelection(recorder);
+  const playback = useRecordingPlayback();
 
   const chooseDrill = (drill: Drill) => {
-    player.pause();
+    playback.stop();
     setActive(drill);
     setSentenceIndex(0);
     setPhase('ready');
@@ -117,48 +50,7 @@ export default function DrillsScreen() {
     setReflection(null);
     setMessage(null);
   };
-  const loadMicrophoneInputs = async () => {
-    setMessage(null);
-    setIsLoadingInputs(true);
-    try {
-      const permission = await requestRecordingPermissionsAsync();
-      if (!permission.granted) {
-        setMessage('マイク一覧を表示するには、マイクの利用許可が必要です。');
-        return;
-      }
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      await recorder.prepareToRecordAsync();
-      const inputs = deduplicateInputs(recorder.getAvailableInputs());
-      const current = await recorder.getCurrentInput();
-      const preferred = resolveMicrophonePreference(inputs, microphonePreference);
-      if (preferred) recorder.setInput(preferred.uid);
-      const displayed = preferred ?? current;
-      setAvailableInputs(inputs);
-      setCurrentInputName(displayed.name || displayed.type || '既定のマイク');
-      setSelectedInputUid(displayed.uid);
-      setIsInputListOpen(true);
-      recorder.record();
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      if (recorder.getStatus().isRecording) await recorder.stop();
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-    } catch {
-      if (recorder.getStatus().isRecording) await recorder.stop().catch(() => undefined);
-      setMessage('マイク一覧を取得できませんでした。接続状態を確認してください。');
-    } finally {
-      setIsLoadingInputs(false);
-    }
-  };
-  const selectMicrophoneInput = async (input: RecordingInput) => {
-    try {
-      recorder.setInput(input.uid);
-      setSelectedInputUid(input.uid);
-      setCurrentInputName(input.name || input.type || '既定のマイク');
-      setMicrophonePreference(await saveMicrophonePreference(input));
-      setMessage(null);
-    } catch {
-      setMessage('このマイクを選択できませんでした。もう一度一覧を読み込んでください。');
-    }
-  };
+
   const start = async () => {
     setMessage(null);
     setReflection(null);
@@ -170,22 +62,14 @@ export default function DrillsScreen() {
     try {
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
-      const inputs = deduplicateInputs(recorder.getAvailableInputs());
-      const preferred =
-        resolveMicrophonePreference(inputs, microphonePreference) ??
-        inputs.find((input) => input.uid === selectedInputUid) ??
-        null;
-      if (preferred) recorder.setInput(preferred.uid);
-      const current = preferred ?? (await recorder.getCurrentInput());
-      setAvailableInputs(inputs);
-      setSelectedInputUid(current.uid);
-      setCurrentInputName(current.name || current.type || '既定のマイク');
+      await microphone.applyPreferredInput();
       recorder.record();
       setPhase('recording');
     } catch {
       setMessage('録音を開始できませんでした。');
     }
   };
+
   const stop = async () => {
     try {
       const seconds = Math.max(1, Math.round((recorder.getStatus().durationMillis ?? 0) / 1000));
@@ -199,36 +83,20 @@ export default function DrillsScreen() {
       setMessage('録音を終了できませんでした。');
     }
   };
+
   const play = async () => {
     if (!recordingUri) return;
     setMessage(null);
     try {
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-      if (Platform.OS === 'web') {
-        webPlayerRef.current?.pause();
-        const audio = new Audio(recordingUri);
-        webPlayerRef.current = audio;
-        audio.muted = false;
-        audio.volume = 1;
-        audio.playbackRate = 1;
-        await audio.play();
-        return;
-      }
-      player.pause();
-      player.replace(recordingUri);
-      player.muted = false;
-      player.volume = 1;
-      player.playbackRate = 1;
-      await player.seekTo(0);
-      player.play();
+      await playback.play(recordingUri);
     } catch {
       setMessage('録音を再生できませんでした。もう一度録音してください。');
     }
   };
+
   const completeSentence = async () => {
     if (!active) return;
-    const nextCount = completedSentences + 1;
-    setCompletedSentences(nextCount);
+    setCompletedSentences((value) => value + 1);
     await saveDrillHistory({
       drillId: active.id,
       durationSeconds: lastRecordingSeconds,
@@ -244,13 +112,15 @@ export default function DrillsScreen() {
       setPhase('ready');
     }
   };
+
   const retrySentence = () => {
-    player.pause();
+    playback.stop();
     setRecordingUri(null);
     setLastRecordingSeconds(0);
     setReflection(null);
     setPhase('ready');
   };
+
   const progressRatio = active ? Math.min(1, completedSentences / active.sentences.length) : 0;
   const progressGreen = `rgba(24,122,100,${0.2 + progressRatio * 0.8})`;
 
@@ -331,59 +201,7 @@ export default function DrillsScreen() {
                   <Text style={styles.progress}>{completedSentences}文完了</Text>
                 </View>
                 <Text style={styles.sentence}>{active.sentences[sentenceIndex]}</Text>
-                <View style={styles.inputCard}>
-                  <View style={styles.inputIndicator} />
-                  <View style={styles.inputTextWrap}>
-                    <Text style={styles.inputLabel}>使用するマイク</Text>
-                    <Text style={styles.inputName}>{currentInputName}</Text>
-                    <Text style={styles.inputMeta}>
-                      {availableInputs.length > 0
-                        ? `${availableInputs.length}台の入力デバイスを認識`
-                        : '選択しない場合は端末の既定マイクを使います'}
-                    </Text>
-                  </View>
-                  {phase === 'ready' && (
-                    <Pressable
-                      style={[styles.inputAction, isLoadingInputs && styles.inputActionDisabled]}
-                      onPress={
-                        availableInputs.length > 0
-                          ? () => setIsInputListOpen(true)
-                          : loadMicrophoneInputs
-                      }
-                      disabled={isLoadingInputs}>
-                      <Text style={styles.inputActionText}>
-                        {isLoadingInputs ? '確認中…' : availableInputs.length > 0 ? '変更' : '選ぶ'}
-                      </Text>
-                    </Pressable>
-                  )}
-                </View>
-                {phase === 'ready' && isInputListOpen && availableInputs.length > 0 && (
-                  <View style={styles.inputList}>
-                    <Text style={styles.inputListTitle}>使用するマイクを選択</Text>
-                    {availableInputs.map((input) => {
-                      const selected = selectedInputUid === input.uid;
-                      return (
-                        <Pressable
-                          key={input.uid}
-                          style={[styles.inputOption, selected && styles.inputOptionSelected]}
-                          onPress={() => selectMicrophoneInput(input)}>
-                          <View style={[styles.radio, selected && styles.radioSelected]}>
-                            {selected && <View style={styles.radioDot} />}
-                          </View>
-                          <View style={styles.inputOptionTextWrap}>
-                            <Text style={styles.inputOptionName}>{input.name}</Text>
-                            <Text style={styles.inputOptionType}>{input.type}</Text>
-                          </View>
-                        </Pressable>
-                      );
-                    })}
-                    <Pressable
-                      style={styles.inputConfirmButton}
-                      onPress={() => setIsInputListOpen(false)}>
-                      <Text style={styles.inputConfirmButtonText}>このマイクに決定</Text>
-                    </Pressable>
-                  </View>
-                )}
+                <MicrophonePicker selection={microphone} enabled={phase === 'ready'} />
                 <View style={styles.micWrap}>
                   <View style={[styles.mic, phase === 'recording' && styles.micActive]}>
                     <Text style={styles.micDot}>●</Text>
@@ -478,39 +296,39 @@ export default function DrillsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.cream },
+  safeArea: { flex: 1, backgroundColor: palette.cream },
   container: { width: '100%', maxWidth: 820, alignSelf: 'center', padding: 22, paddingBottom: 50 },
-  hero: { color: colors.ink, fontSize: 27, lineHeight: 35, fontWeight: '800' },
-  intro: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 7, marginBottom: 20 },
+  hero: { color: palette.ink, fontSize: 27, lineHeight: 35, fontWeight: '800' },
+  intro: { color: palette.muted, fontSize: 14, lineHeight: 22, marginTop: 7, marginBottom: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   drillCard: { flexGrow: 1, flexBasis: 300, borderRadius: 18, padding: 18, minHeight: 155 },
-  drillTitle: { color: colors.ink, fontSize: 17, fontWeight: '800' },
-  drillBody: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
+  drillTitle: { color: palette.ink, fontSize: 17, fontWeight: '800' },
+  drillBody: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
   startLink: {
-    color: colors.greenDark,
+    color: palette.greenDark,
     fontSize: 12,
     fontWeight: '800',
     marginTop: 'auto',
     paddingTop: 12,
   },
-  change: { color: colors.green, fontSize: 12, fontWeight: '700', marginBottom: 13 },
+  change: { color: palette.green, fontSize: 12, fontWeight: '700', marginBottom: 13 },
   diagnosisBanner: {
-    backgroundColor: '#FFF9EA',
+    backgroundColor: palette.amberCream,
     borderWidth: 1,
-    borderColor: '#EBDCA8',
+    borderColor: palette.amberLine,
     borderRadius: 14,
     padding: 12,
     marginBottom: 12,
   },
-  diagnosisBannerTitle: { color: '#805B12', fontSize: 12, fontWeight: '800' },
-  diagnosisBannerText: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 3 },
+  diagnosisBannerTitle: { color: palette.amber, fontSize: 12, fontWeight: '800' },
+  diagnosisBannerText: { color: palette.muted, fontSize: 11, lineHeight: 17, marginTop: 3 },
   practiceMeterCard: {
-    backgroundColor: colors.white,
+    backgroundColor: palette.white,
     borderRadius: 20,
     padding: 16,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: palette.line,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -524,158 +342,99 @@ const styles = StyleSheet.create({
     borderWidth: 7,
     borderColor: '#CBE7DD',
   },
-  practiceMeterValue: { color: colors.greenDark, fontSize: 24, fontWeight: '800' },
-  practiceMeterUnit: { color: colors.greenDark, fontSize: 10, fontWeight: '800' },
+  practiceMeterValue: { color: palette.greenDark, fontSize: 24, fontWeight: '800' },
+  practiceMeterUnit: { color: palette.greenDark, fontSize: 10, fontWeight: '800' },
   practiceMeterCopy: { flex: 1 },
-  practiceMeterTitle: { color: colors.ink, fontSize: 15, fontWeight: '800' },
-  practiceMeterText: { color: colors.muted, fontSize: 11, lineHeight: 18, marginTop: 4 },
+  practiceMeterTitle: { color: palette.ink, fontSize: 15, fontWeight: '800' },
+  practiceMeterText: { color: palette.muted, fontSize: 11, lineHeight: 18, marginTop: 4 },
   practiceCard: {
-    backgroundColor: colors.white,
+    backgroundColor: palette.white,
     borderRadius: 24,
     padding: 22,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: palette.line,
   },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  progress: { color: colors.green, fontSize: 11, fontWeight: '800' },
+  progress: { color: palette.green, fontSize: 11, fontWeight: '800' },
   sentence: {
-    color: colors.ink,
+    color: palette.ink,
     fontSize: 23,
     lineHeight: 38,
     fontWeight: '600',
-    backgroundColor: colors.mint,
+    backgroundColor: palette.mint,
     borderRadius: 18,
     padding: 20,
     marginTop: 15,
   },
-  inputCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.cream,
-    borderRadius: 15,
-    padding: 13,
-    marginTop: 14,
-  },
-  inputIndicator: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.green },
-  inputTextWrap: { flex: 1 },
-  inputLabel: { color: colors.muted, fontSize: 10, fontWeight: '700' },
-  inputName: { color: colors.ink, fontSize: 13, fontWeight: '800', marginTop: 2 },
-  inputMeta: { color: colors.muted, fontSize: 10, marginTop: 2 },
-  inputAction: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  inputActionDisabled: { opacity: 0.55 },
-  inputActionText: { color: colors.greenDark, fontSize: 12, fontWeight: '800' },
-  inputList: {
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 15,
-    padding: 9,
-    marginTop: 8,
-    gap: 5,
-  },
-  inputListTitle: { color: colors.muted, fontSize: 11, fontWeight: '700', padding: 5 },
-  inputOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    borderRadius: 11,
-    padding: 10,
-  },
-  inputOptionSelected: { backgroundColor: colors.mint },
-  radio: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: colors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioSelected: { borderColor: colors.green },
-  radioDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
-  inputOptionTextWrap: { flex: 1 },
-  inputOptionName: { color: colors.ink, fontSize: 13, fontWeight: '700' },
-  inputOptionType: { color: colors.muted, fontSize: 10, marginTop: 2 },
-  inputConfirmButton: {
-    backgroundColor: colors.green,
-    borderRadius: 12,
-    alignItems: 'center',
-    paddingVertical: 11,
-    marginTop: 4,
-  },
-  inputConfirmButtonText: { color: colors.white, fontSize: 13, fontWeight: '800' },
   micWrap: { alignItems: 'center', paddingVertical: 23 },
   mic: {
     width: 65,
     height: 65,
     borderRadius: 33,
-    backgroundColor: colors.green,
+    backgroundColor: palette.green,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  micActive: { backgroundColor: colors.coral },
-  micDot: { color: colors.white, fontSize: 18 },
-  timer: { color: colors.ink, fontSize: 25, fontWeight: '800', marginTop: 8 },
-  status: { color: colors.muted, fontSize: 12, marginTop: 4, textAlign: 'center' },
+  micActive: { backgroundColor: palette.coral },
+  micDot: { color: palette.white, fontSize: 18 },
+  timer: { color: palette.ink, fontSize: 25, fontWeight: '800', marginTop: 8 },
+  status: { color: palette.muted, fontSize: 12, marginTop: 4, textAlign: 'center' },
   primary: {
-    backgroundColor: colors.green,
+    backgroundColor: palette.green,
     borderRadius: 15,
     alignItems: 'center',
     paddingVertical: 14,
   },
-  primaryText: { color: colors.white, fontSize: 14, fontWeight: '800' },
-  stop: { backgroundColor: '#FFF0ED', borderRadius: 15, alignItems: 'center', paddingVertical: 14 },
-  stopText: { color: '#B63D2C', fontSize: 14, fontWeight: '800' },
+  primaryText: { color: palette.white, fontSize: 14, fontWeight: '800' },
+  stop: {
+    backgroundColor: palette.dangerSoft,
+    borderRadius: 15,
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  stopText: { color: palette.danger, fontSize: 14, fontWeight: '800' },
   actions: { gap: 10 },
   secondary: {
     borderWidth: 1,
-    borderColor: colors.green,
+    borderColor: palette.green,
     borderRadius: 15,
     alignItems: 'center',
     paddingVertical: 13,
   },
-  secondaryText: { color: colors.greenDark, fontSize: 14, fontWeight: '800' },
-  reflectionCard: { backgroundColor: colors.cream, borderRadius: 15, padding: 13 },
-  reflectionTitle: { color: colors.ink, fontSize: 13, fontWeight: '800' },
-  reflectionHint: { color: colors.muted, fontSize: 10, lineHeight: 16, marginTop: 4 },
+  secondaryText: { color: palette.greenDark, fontSize: 14, fontWeight: '800' },
+  reflectionCard: { backgroundColor: palette.cream, borderRadius: 15, padding: 13 },
+  reflectionTitle: { color: palette.ink, fontSize: 13, fontWeight: '800' },
+  reflectionHint: { color: palette.muted, fontSize: 10, lineHeight: 16, marginTop: 4 },
   reflectionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   reflectionChip: {
-    backgroundColor: colors.white,
+    backgroundColor: palette.white,
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: palette.line,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  reflectionChipActive: { backgroundColor: colors.green, borderColor: colors.green },
-  reflectionChipText: { color: colors.greenDark, fontSize: 11, fontWeight: '700' },
-  reflectionChipTextActive: { color: colors.white },
+  reflectionChipActive: { backgroundColor: palette.green, borderColor: palette.green },
+  reflectionChipText: { color: palette.greenDark, fontSize: 11, fontWeight: '700' },
+  reflectionChipTextActive: { color: palette.white },
   retryLink: {
-    color: colors.green,
+    color: palette.green,
     fontSize: 11,
     fontWeight: '800',
     marginTop: 11,
     textAlign: 'center',
   },
-  error: { color: '#B63D2C', fontSize: 12, textAlign: 'center', marginTop: 10 },
+  error: { color: palette.danger, fontSize: 12, textAlign: 'center', marginTop: 10 },
   completeCard: {
-    backgroundColor: colors.white,
+    backgroundColor: palette.white,
     borderRadius: 24,
     padding: 28,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.line,
+    borderColor: palette.line,
   },
-  completeMark: { color: colors.green, fontSize: 38, fontWeight: '800' },
-  completeTitle: { color: colors.ink, fontSize: 23, fontWeight: '800', marginTop: 6 },
-  completeValue: { color: colors.greenDark, fontSize: 18, fontWeight: '800', marginTop: 10 },
-  completeNote: { color: colors.muted, fontSize: 12, marginTop: 5, marginBottom: 20 },
+  completeMark: { color: palette.green, fontSize: 38, fontWeight: '800' },
+  completeTitle: { color: palette.ink, fontSize: 23, fontWeight: '800', marginTop: 6 },
+  completeValue: { color: palette.greenDark, fontSize: 18, fontWeight: '800', marginTop: 10 },
+  completeNote: { color: palette.muted, fontSize: 12, marginTop: 5, marginBottom: 20 },
 });

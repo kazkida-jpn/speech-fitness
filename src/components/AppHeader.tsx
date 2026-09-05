@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { palette } from '@/constants/palette';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 function userLabel(user: User) {
@@ -89,7 +90,7 @@ const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 22,
     borderBottomWidth: 1,
-    borderBottomColor: '#DCE6E2',
+    borderBottomColor: palette.line,
     paddingBottom: 13,
   },
   mainRow: {
@@ -100,38 +101,38 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   brand: { textDecorationLine: 'none' },
-  eyebrow: { color: '#187A64', fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  logo: { color: '#19312D', fontSize: 22, fontWeight: '800', marginTop: 2 },
+  eyebrow: { color: palette.green, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
+  logo: { color: palette.ink, fontSize: 22, fontWeight: '800', marginTop: 2 },
   account: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
   avatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#DDF4EA',
+    backgroundColor: palette.mint,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#0F5E4D', fontSize: 13, fontWeight: '800' },
+  avatarText: { color: palette.greenDark, fontSize: 13, fontWeight: '800' },
   accountText: { maxWidth: 170 },
-  loginState: { color: '#187A64', fontSize: 9, fontWeight: '800' },
-  userName: { color: '#19312D', fontSize: 11, fontWeight: '700' },
+  loginState: { color: palette.green, fontSize: 9, fontWeight: '800' },
+  userName: { color: palette.ink, fontSize: 11, fontWeight: '700' },
   logoutButton: {
     borderWidth: 1,
-    borderColor: '#DCE6E2',
+    borderColor: palette.line,
     borderRadius: 10,
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
-  logoutText: { color: '#60726E', fontSize: 10, fontWeight: '700' },
+  logoutText: { color: palette.muted, fontSize: 10, fontWeight: '700' },
   loginButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: palette.white,
     borderWidth: 1,
-    borderColor: '#DCE6E2',
+    borderColor: palette.line,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  loginButtonText: { color: '#0F5E4D', fontSize: 11, fontWeight: '800' },
+  loginButtonText: { color: palette.greenDark, fontSize: 11, fontWeight: '800' },
   navigation: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 12 },
-  navLink: { color: '#60726E', fontSize: 11, fontWeight: '700', textDecorationLine: 'none' },
+  navLink: { color: palette.muted, fontSize: 11, fontWeight: '700', textDecorationLine: 'none' },
 });

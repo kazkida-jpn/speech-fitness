@@ -1,5 +1,18 @@
+export const DRILL_IDS = [
+  'sibilants',
+  'consonants',
+  'mora',
+  'endings',
+  'connections',
+  'rhythm',
+  'pauses',
+  'speed',
+] as const;
+
+export type DrillId = (typeof DRILL_IDS)[number];
+
 export type Drill = {
-  id: string;
+  id: DrillId;
   title: string;
   shortTitle: string;
   description: string;
@@ -162,8 +175,9 @@ export const DRILLS: Drill[] = [
   },
 ];
 
-export function recommendDrills(text: string) {
-  const rules: [RegExp, string][] = [
+/** Picks up to three drill ids whose focus is mentioned in a diagnosis text. */
+export function recommendDrills(text: string): DrillId[] {
+  const rules: [RegExp, DrillId][] = [
     [/サ行|ザ行|シ|ジ|チ|ツ|ずつ/, 'sibilants'],
     [/カ行|ガ行|タ行|ダ行|パ行|バ行|ラ行|子音/, 'consonants'],
     [/長音|促音|撥音|切符|音の長さ/, 'mora'],
