@@ -16,7 +16,7 @@ import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
 import { DRILLS, type Drill } from '@/lib/drills';
 import { saveDrillHistory } from '@/lib/progress';
-import { RECORDING_OPTIONS } from '@/lib/recording-inputs';
+import { RECORDING_OPTIONS } from '@/lib/recorder';
 
 type Phase = 'ready' | 'recording' | 'recorded' | 'complete';
 

@@ -13,13 +13,11 @@ import {
   type MicrophonePreference,
 } from '@/lib/microphone-preference';
 import {
-  DEFAULT_INPUT_LABEL,
-  deduplicateInputs,
-  inputDisplayName,
   installHighFidelityWebMicrophoneConstraints,
   wait,
   waitForRecorderStart,
-} from '@/lib/recording-inputs';
+} from '@/lib/recorder';
+import { DEFAULT_INPUT_LABEL, deduplicateInputs, inputDisplayName } from '@/lib/recording-inputs';
 
 export type MicrophoneSelection = ReturnType<typeof useMicrophoneSelection>;
 
