@@ -74,6 +74,26 @@ pnpm install
 pnpm web
 ```
 
+## 開発コマンド
+
+```bash
+pnpm lint          # ESLint（Prettier の整形チェックを含む）
+pnpm format        # Prettier で全ファイルを整形
+pnpm test          # vitest で純粋関数のユニットテスト
+pnpm vercel-build  # Web 書き出しと Vercel 用ページ配置
+```
+
+## コード構成
+
+- `src/app/` 画面と API ルート。`check.tsx` は測定フローの制御だけを持ちます。
+- `src/components/check/` 測定結果の表示カード群
+- `src/components/MicrophonePicker.tsx` 測定とドリルで共通のマイク選択 UI
+- `src/hooks/` 録音（`use-take-recorder`）、マイク選択、再生のフック
+- `src/lib/` 純粋関数と型。`clarity-metrics.ts`、`diagnosis.ts`、`wav.ts`、`check-session.ts` にはテストがあります
+- `src/constants/palette.ts` 全画面共通の色
+
+新しい画面を追加したら、`vercel.json` の rewrites にもパスを足してください。`scripts/prepare-vercel.js` が不足を警告します。
+
 ## 公開について
 
 現段階では公開しません。技術検証後、VercelへWeb版を展開し、将来の候補として `voice.learn-k.net` を使用します。

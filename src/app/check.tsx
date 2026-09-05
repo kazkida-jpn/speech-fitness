@@ -17,7 +17,8 @@ import { palette } from '@/constants/palette';
 import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
 import { useTakeRecorder } from '@/hooks/use-take-recorder';
-import type { AiDiagnosis, ApiErrorBody, ClarityAssessment } from '@/lib/assessment-types';
+import { requestAssessment, requestDiagnosis } from '@/lib/api-client';
+import type { AiDiagnosis, ClarityAssessment } from '@/lib/assessment-types';
 import {
   SENTENCE_COUNT,
   TAKE_NUMBERS,
@@ -132,26 +133,30 @@ export default function CheckScreen() {
     if (!hasAllTakes(takes) || !hasAllTakes(results)) return;
     setDiagnosisError(null);
     setIsCreatingDiagnosis(true);
+    let diagnosis: AiDiagnosis;
     try {
-      const response = await fetch('/diagnosis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildDiagnosisRequest({ takes, results, sessionTexts })),
-      });
-      const body = (await response.json()) as AiDiagnosis & ApiErrorBody;
-      if (!response.ok) throw new Error(body.error || 'AI診断を作成できませんでした。');
-      setAiDiagnosis(body);
-      if (!assessmentSavedRef.current) {
-        await saveAssessmentHistory({
-          headline: body.headline,
-          recommendedDrillIds: recommendedDrillIds(body),
-        });
-        assessmentSavedRef.current = true;
-      }
+      diagnosis = await requestDiagnosis(buildDiagnosisRequest({ takes, results, sessionTexts }));
     } catch (error) {
       setDiagnosisError(error instanceof Error ? error.message : 'AI診断を作成できませんでした。');
+      return;
     } finally {
       setIsCreatingDiagnosis(false);
+    }
+    setAiDiagnosis(diagnosis);
+    await saveDiagnosisHistory(diagnosis);
+  };
+
+  /** Stores the headline and drill ids once per session; failure only shows a note. */
+  const saveDiagnosisHistory = async (diagnosis: AiDiagnosis) => {
+    if (assessmentSavedRef.current) return;
+    try {
+      await saveAssessmentHistory({
+        headline: diagnosis.headline,
+        recommendedDrillIds: recommendedDrillIds(diagnosis),
+      });
+      assessmentSavedRef.current = true;
+    } catch {
+      setErrorMessage('診断結果は表示できましたが、履歴の保存に失敗しました。');
     }
   };
 
@@ -163,13 +168,11 @@ export default function CheckScreen() {
       const results: TakeMap<ClarityAssessment> = {};
       for (const takeNumber of TAKE_NUMBERS) {
         const wav = await convertRecordingToAssessmentWav(takes[takeNumber].uri);
-        const form = new FormData();
-        form.append('audio', wav, `take-${takeNumber}.wav`);
-        form.append('referenceText', sessionTexts[sentenceIndexForTake(takeNumber)]);
-        const response = await fetch('/assessment', { method: 'POST', body: form });
-        const body = (await response.json()) as ClarityAssessment & ApiErrorBody;
-        if (!response.ok) throw new Error(body.error ?? '明瞭さを評価できませんでした。');
-        results[takeNumber] = body;
+        results[takeNumber] = await requestAssessment(
+          wav,
+          sessionTexts[sentenceIndexForTake(takeNumber)],
+          `take-${takeNumber}.wav`
+        );
       }
       setClarityResults(results);
       await createAiDiagnosis(results);

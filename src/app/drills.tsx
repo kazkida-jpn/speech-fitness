@@ -97,11 +97,16 @@ export default function DrillsScreen() {
   const completeSentence = async () => {
     if (!active) return;
     setCompletedSentences((value) => value + 1);
-    await saveDrillHistory({
-      drillId: active.id,
-      durationSeconds: lastRecordingSeconds,
-      sentenceCount: 1,
-    });
+    try {
+      await saveDrillHistory({
+        drillId: active.id,
+        durationSeconds: lastRecordingSeconds,
+        sentenceCount: 1,
+      });
+    } catch {
+      // Practice continues offline; only the cloud record is missing.
+      setMessage('練習記録を保存できませんでした。練習はそのまま続けられます。');
+    }
     if (sentenceIndex >= active.sentences.length - 1) {
       setPhase('complete');
     } else {

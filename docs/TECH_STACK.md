@@ -11,6 +11,12 @@
 - 秘密鍵を使うAPI: Vercel Functions（後続段階）
 - ストアビルド: Expo EAS Build
 - ストア提出: Expo EAS Submit
+- 整形と静的検査: Prettier / ESLint（eslint-config-expo）
+- ユニットテスト: vitest（`src/lib` の純粋関数が対象）
+
+## 依存関係の注意
+
+Speech SDK が内部で使う `ws` や `bent` などは、Metro が API ルートのバンドルに取り込むため、直接依存に入れる必要はない。
 
 ## 公開方針
 
