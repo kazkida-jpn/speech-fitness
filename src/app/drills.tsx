@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
+import { PremiumBanner } from '@/components/PremiumBanner';
 import { palette } from '@/constants/palette';
 import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
@@ -141,6 +142,7 @@ export default function DrillsScreen() {
         <AppHeader />
         {!active ? (
           <>
+            <PremiumBanner message="無料は2種類。8種類すべてのドリルと測定履歴が使えます。" />
             <Text style={styles.hero}>今日鍛えるところを選びましょう</Text>
             <Text style={styles.intro}>
               点数はつきません。例文を読み、自分の声を聞いて、少しずつ習慣にします。

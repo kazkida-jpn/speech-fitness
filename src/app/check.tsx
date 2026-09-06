@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
+import { PremiumBanner } from '@/components/PremiumBanner';
 import { AiDiagnosisCard } from '@/components/check/AiDiagnosisCard';
 import { CheckMetricsOverview } from '@/components/check/CheckMetricsOverview';
 import { ClarityConsentCard } from '@/components/check/ClarityConsentCard';
@@ -212,6 +213,7 @@ export default function CheckScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
+        <PremiumBanner message="チェックは無料です。診断で勧められたドリルはプレミアムで練習できます。" />
         <View style={styles.header}>
           <View>
             <Text style={styles.eyebrow}>WEEKLY CHECK</Text>
