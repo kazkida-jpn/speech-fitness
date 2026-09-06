@@ -9,6 +9,25 @@ import { openBillingPortal, startCheckout, usePlan } from '@/lib/billing';
 import { BILLING_PLANS, PREMIUM_FEATURES, TRIAL_DAYS, type BillingPlan } from '@/lib/plans';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
+const TRIAL_STEPS = [
+  {
+    title: '申し込み時の請求は0円',
+    text: 'カードを登録するだけで、その日の請求はありません。すぐにプレミアムの全機能が使えます。',
+  },
+  {
+    title: `${TRIAL_DAYS}日間は無料で利用`,
+    text: '無料期間の終了7日前に、登録したメールアドレスへお知らせが届きます。',
+  },
+  {
+    title: `${TRIAL_DAYS + 1}日目に初回の請求`,
+    text: '無料期間が終わると、選んだプランの料金が自動で請求され、以降は同じ間隔で自動更新されます。',
+  },
+  {
+    title: '続けない場合は無料期間中に解約',
+    text: 'このページの「お支払いの管理・解約」からいつでも解約できます。無料期間中に解約すれば請求は0円で、期間末まで利用できます。',
+  },
+];
+
 export default function PricingScreen() {
   const params = useLocalSearchParams<{ checkout?: string }>();
   const { plan, isPremium, isLoading } = usePlan();
@@ -88,6 +107,19 @@ export default function PricingScreen() {
           <Text style={styles.trialNote}>
             初回は{TRIAL_DAYS}日間無料。無料期間中に解約すれば料金はかかりません。
           </Text>
+        </View>
+
+        <View style={styles.flowCard}>
+          <Text style={styles.flowTitle}>無料期間の流れ</Text>
+          {TRIAL_STEPS.map((step, index) => (
+            <View key={step.title} style={styles.flowRow}>
+              <Text style={styles.flowIndex}>{index + 1}</Text>
+              <View style={styles.flowBody}>
+                <Text style={styles.flowStepTitle}>{step.title}</Text>
+                <Text style={styles.flowStepText}>{step.text}</Text>
+              </View>
+            </View>
+          ))}
         </View>
 
         {!isPremium && (
@@ -182,6 +214,32 @@ const styles = StyleSheet.create({
   featureTitle: { color: palette.amber, fontSize: 12, fontWeight: '800', marginBottom: 8 },
   featureItem: { color: palette.ink, fontSize: 14, lineHeight: 24 },
   trialNote: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 10 },
+  flowCard: {
+    backgroundColor: palette.white,
+    borderRadius: 18,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: palette.line,
+    marginBottom: 14,
+    gap: 12,
+  },
+  flowTitle: { color: palette.ink, fontSize: 15, fontWeight: '800' },
+  flowRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  flowIndex: {
+    width: 26,
+    height: 26,
+    lineHeight: 26,
+    textAlign: 'center',
+    borderRadius: 13,
+    backgroundColor: palette.mint,
+    color: palette.greenDark,
+    fontSize: 13,
+    fontWeight: '800',
+    overflow: 'hidden',
+  },
+  flowBody: { flex: 1 },
+  flowStepTitle: { color: palette.ink, fontSize: 14, fontWeight: '800' },
+  flowStepText: { color: palette.muted, fontSize: 12, lineHeight: 19, marginTop: 2 },
   planGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 14 },
   planCard: {
     flexGrow: 1,
