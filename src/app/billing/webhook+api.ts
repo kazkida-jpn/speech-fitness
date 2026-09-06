@@ -1,18 +1,11 @@
 import type Stripe from 'stripe';
 
-import type { Plan } from '@/lib/plans';
-import { getStripe } from '@/server/stripe';
+import { getStripe, planForStatus } from '@/server/stripe';
 import { setUserPlan } from '@/server/supabase-admin';
 
 // Stripe calls this after checkout and on every subscription change. The user id travels in
 // the metadata we set when creating the Checkout session, and is copied onto the customer so
 // later events can be mapped even without subscription metadata.
-
-const PREMIUM_STATUSES: Stripe.Subscription.Status[] = ['active', 'trialing', 'past_due'];
-
-function planForStatus(status: Stripe.Subscription.Status): Plan {
-  return PREMIUM_STATUSES.includes(status) ? 'premium' : 'free';
-}
 
 async function userIdForSubscription(stripe: Stripe, subscription: Stripe.Subscription) {
   if (subscription.metadata?.userId) return subscription.metadata.userId;

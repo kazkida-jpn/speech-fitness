@@ -1,11 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
 import { palette } from '@/constants/palette';
-import { openBillingPortal, startCheckout, usePlan } from '@/lib/billing';
+import { openBillingPortal, startCheckout, syncPlan, usePlan } from '@/lib/billing';
 import { BILLING_PLANS, PREMIUM_FEATURES, TRIAL_DAYS, type BillingPlan } from '@/lib/plans';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
@@ -30,9 +30,17 @@ const TRIAL_STEPS = [
 
 export default function PricingScreen() {
   const params = useLocalSearchParams<{ checkout?: string }>();
-  const { plan, isPremium, isLoading } = usePlan();
+  const { plan, isPremium, isLoading, refresh } = usePlan();
   const [busyPlan, setBusyPlan] = useState<BillingPlan | 'portal' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  // Back from Checkout: reconcile with Stripe instead of waiting for the webhook.
+  useEffect(() => {
+    if (params.checkout !== 'success') return;
+    syncPlan()
+      .then(() => refresh())
+      .catch(() => {});
+  }, [params.checkout, refresh]);
 
   const subscribe = async (billingPlan: BillingPlan) => {
     setMessage(null);

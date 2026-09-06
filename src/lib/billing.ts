@@ -39,6 +39,15 @@ export function openBillingPortal() {
   return openStripePage('/billing/portal');
 }
 
+/** Asks the server to re-read the plan from Stripe; used right after Checkout returns. */
+export async function syncPlan(): Promise<Plan> {
+  const response = await fetch('/billing/sync', { method: 'POST', headers: await authHeaders() });
+  const result = (await response.json()) as { plan?: Plan } & ApiErrorBody;
+  if (!response.ok || !result.plan)
+    throw new Error(result.error || 'プランを確認できませんでした。');
+  return result.plan;
+}
+
 export async function fetchPlan(): Promise<Plan> {
   if (!supabase) return 'free';
   const { data: userData } = await supabase.auth.getUser();
