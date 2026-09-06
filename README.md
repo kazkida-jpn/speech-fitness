@@ -105,3 +105,17 @@ pnpm vercel-build  # Web 書き出しと Vercel 用ページ配置
 3. 週次チェックの通知
 4. 無料／プレミアム権限の決済連携
 5. 実機での録音品質検証
+
+## 課金の設定
+
+Stripe で月額と年額のサブスクリプションを販売します。サーバー環境に次を設定してください。`scripts/stripe-setup.mjs` を `STRIPE_SECRET_KEY` を付けて実行すると、商品・価格・カスタマーポータル設定・Webhook を作成して値を表示します。
+
+```bash
+STRIPE_SECRET_KEY=sk_...
+STRIPE_PRICE_MONTHLY=price_...
+STRIPE_PRICE_YEARLY=price_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+```
+
+Webhook の URL は `https://<ドメイン>/billing/webhook` です。プランは Supabase の `profiles.plan` 列で判定し、Webhook が更新します。

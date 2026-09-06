@@ -11,8 +11,11 @@ type Props = {
   error: string | null;
   /** The drill matching `diagnosis.recommendedDrillId`, resolved by the caller. */
   recommendedDrill: Drill | null;
+  /** Whether the user may run the recommended drill right away. */
+  isPremium: boolean;
   onRetry: () => void;
   onStartDrill: (drill: Drill) => void;
+  onSubscribe: () => void;
 };
 
 function DiagnosisSection({ title, items }: { title: string; items: string[] }) {
@@ -35,8 +38,10 @@ export function AiDiagnosisCard({
   isCreating,
   error,
   recommendedDrill,
+  isPremium,
   onRetry,
   onStartDrill,
+  onSubscribe,
 }: Props) {
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
@@ -75,21 +80,21 @@ export function AiDiagnosisCard({
               <Text style={styles.recommendedDrillReason}>{diagnosis.recommendedDrillReason}</Text>
               <Pressable
                 style={styles.recommendedDrillButton}
-                onPress={() => setIsPaywallOpen(true)}>
+                onPress={() =>
+                  isPremium ? onStartDrill(recommendedDrill) : setIsPaywallOpen(true)
+                }>
                 <Text style={styles.recommendedDrillButtonText}>このドリルを始める</Text>
               </Pressable>
             </View>
           )}
-          {isPaywallOpen && recommendedDrill && (
+          {isPaywallOpen && recommendedDrill && !isPremium && (
             <View style={styles.paywallCard}>
               <Text style={styles.paywallTitle}>診断に合わせた練習を続ける</Text>
               <Text style={styles.paywallText}>
-                推奨ドリル、練習履歴、週次レポートは有料プランで提供予定です。現在は体験版として利用できます。
+                AIが選んだドリル、8種類すべてのドリル、測定履歴はプレミアムで利用できます。初回は14日間無料です。
               </Text>
-              <Pressable
-                style={styles.recommendedDrillButton}
-                onPress={() => onStartDrill(recommendedDrill)}>
-                <Text style={styles.recommendedDrillButtonText}>体験版でドリルへ進む</Text>
+              <Pressable style={styles.recommendedDrillButton} onPress={onSubscribe}>
+                <Text style={styles.recommendedDrillButtonText}>14日間無料で始める</Text>
               </Pressable>
               <Pressable onPress={() => setIsPaywallOpen(false)}>
                 <Text style={styles.paywallClose}>今は閉じる</Text>

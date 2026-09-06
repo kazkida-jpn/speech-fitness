@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
+import { usePlan } from '@/lib/billing';
 import { palette } from '@/constants/palette';
 import { DRILLS } from '@/lib/drills';
 import { getDrillHistory, isHistoryUserSignedIn } from '@/lib/progress';
@@ -12,6 +13,7 @@ export default function HistoryScreen() {
     { date: string; seconds: number; sentences: number; drills: string[] }[]
   >([]);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const { isPremium } = usePlan();
   useFocusEffect(
     useCallback(() => {
       Promise.all([isHistoryUserSignedIn(), getDrillHistory()])
@@ -53,6 +55,16 @@ export default function HistoryScreen() {
             <Text style={styles.note}>
               ドリルはログインなしでもお試しいただけます。履歴はログイン後の練習から保存されます。
             </Text>
+          </View>
+        ) : !isPremium ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>履歴と推移はプレミアムで見られます</Text>
+            <Text style={styles.note}>
+              練習は記録されています。プレミアムに登録すると、日ごとの時間と例文数、過去の自分との比較が表示されます。
+            </Text>
+            <Link href="/pricing" style={styles.link}>
+              14日間無料で始める
+            </Link>
           </View>
         ) : rows.length === 0 ? (
           <View style={styles.empty}>

@@ -17,6 +17,10 @@
       "destination": "/api/index"
     },
     {
+      "source": "/billing/(.*)",
+      "destination": "/api/index"
+    },
+    {
       "source": "/check",
       "destination": "/check.html"
     },
@@ -27,6 +31,10 @@
     {
       "source": "/history",
       "destination": "/history.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing.html"
     }
   ]
 }

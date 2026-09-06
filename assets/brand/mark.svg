@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- 発話フィットネス mark: a speech bubble holding a growing voice wave. -->
+  <path fill="#0F5E4D" d="M312 176h400c97.2 0 176 78.8 176 176v240c0 97.2-78.8 176-176 176H452l-148 148c-19.4 19.4-52 8.3-56.3-18.9L232 762.6C175.7 736.3 136 678.4 136 592V352c0-97.2 78.8-176 176-176z"/>
+  <rect fill="#DDF4EA" x="300" y="416" width="72" height="140" rx="36"/>
+  <rect fill="#DDF4EA" x="418" y="356" width="72" height="260" rx="36"/>
+  <rect fill="#FFFFFF" x="536" y="296" width="72" height="380" rx="36"/>
+  <rect fill="#F06C55" x="654" y="236" width="72" height="500" rx="36"/>
+</svg>

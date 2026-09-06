@@ -4,7 +4,7 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from 'expo-audio';
-import { Link, useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +14,9 @@ import { MicrophonePicker } from '@/components/MicrophonePicker';
 import { palette } from '@/constants/palette';
 import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
+import { usePlan } from '@/lib/billing';
 import { DRILLS, type Drill } from '@/lib/drills';
+import { isDrillFree } from '@/lib/plans';
 import { saveDrillHistory } from '@/lib/progress';
 import { RECORDING_OPTIONS } from '@/lib/recorder';
 
@@ -22,6 +24,8 @@ type Phase = 'ready' | 'recording' | 'recorded' | 'complete';
 
 export default function DrillsScreen() {
   const params = useLocalSearchParams<{ drill?: string; source?: string }>();
+  const router = useRouter();
+  const { isPremium, isLoading: isPlanLoading } = usePlan();
   const [active, setActive] = useState<Drill | null>(
     () => DRILLS.find((item) => item.id === params.drill) ?? null
   );
@@ -126,6 +130,8 @@ export default function DrillsScreen() {
     setPhase('ready');
   };
 
+  const isLocked = (drill: Drill) => !isPremium && !isDrillFree(drill.id);
+  const activeLocked = active !== null && !isPlanLoading && isLocked(active);
   const progressRatio = active ? Math.min(1, completedSentences / active.sentences.length) : 0;
   const progressGreen = `rgba(24,122,100,${0.2 + progressRatio * 0.8})`;
 
@@ -140,16 +146,24 @@ export default function DrillsScreen() {
               点数はつきません。例文を読み、自分の声を聞いて、少しずつ習慣にします。
             </Text>
             <View style={styles.grid}>
-              {DRILLS.map((drill) => (
-                <Pressable
-                  key={drill.id}
-                  style={[styles.drillCard, { backgroundColor: drill.accent }]}
-                  onPress={() => chooseDrill(drill)}>
-                  <Text style={styles.drillTitle}>{drill.title}</Text>
-                  <Text style={styles.drillBody}>{drill.description}</Text>
-                  <Text style={styles.startLink}>始める →</Text>
-                </Pressable>
-              ))}
+              {DRILLS.map((drill) => {
+                const locked = !isPlanLoading && isLocked(drill);
+                return (
+                  <Pressable
+                    key={drill.id}
+                    style={[styles.drillCard, { backgroundColor: drill.accent }]}
+                    onPress={() => (locked ? router.push('/pricing') : chooseDrill(drill))}>
+                    <View style={styles.drillTitleRow}>
+                      <Text style={styles.drillTitle}>{drill.title}</Text>
+                      {locked && <Text style={styles.premiumBadge}>プレミアム</Text>}
+                    </View>
+                    <Text style={styles.drillBody}>{drill.description}</Text>
+                    <Text style={styles.startLink}>
+                      {locked ? 'プレミアムで始める →' : '始める →'}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </>
         ) : (
@@ -183,7 +197,17 @@ export default function DrillsScreen() {
                 </Text>
               </View>
             </View>
-            {phase === 'complete' ? (
+            {activeLocked ? (
+              <View style={styles.completeCard}>
+                <Text style={styles.completeTitle}>このドリルはプレミアムで利用できます</Text>
+                <Text style={styles.completeNote}>
+                  8種類すべてのドリルと測定履歴が使えます。初回は14日間無料です。
+                </Text>
+                <Pressable style={styles.primary} onPress={() => router.push('/pricing')}>
+                  <Text style={styles.primaryText}>14日間無料で始める</Text>
+                </Pressable>
+              </View>
+            ) : phase === 'complete' ? (
               <View style={styles.completeCard}>
                 <Text style={styles.completeMark}>✓</Text>
                 <Text style={styles.completeTitle}>今日のドリル完了</Text>
@@ -307,7 +331,17 @@ const styles = StyleSheet.create({
   intro: { color: palette.muted, fontSize: 14, lineHeight: 22, marginTop: 7, marginBottom: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   drillCard: { flexGrow: 1, flexBasis: 300, borderRadius: 18, padding: 18, minHeight: 155 },
+  drillTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   drillTitle: { color: palette.ink, fontSize: 17, fontWeight: '800' },
+  premiumBadge: {
+    color: palette.amber,
+    backgroundColor: palette.amberSoft,
+    fontSize: 10,
+    fontWeight: '800',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
   drillBody: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 7 },
   startLink: {
     color: palette.greenDark,

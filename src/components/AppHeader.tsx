@@ -81,6 +81,9 @@ export function AppHeader() {
         <Link href="/history" style={styles.navLink}>
           履歴
         </Link>
+        <Link href="/pricing" style={styles.navLink}>
+          料金
+        </Link>
       </View>
     </View>
   );

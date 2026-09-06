@@ -18,6 +18,7 @@ import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
 import { useTakeRecorder } from '@/hooks/use-take-recorder';
 import { requestAssessment, requestDiagnosis } from '@/lib/api-client';
+import { usePlan } from '@/lib/billing';
 import type { AiDiagnosis, ClarityAssessment } from '@/lib/assessment-types';
 import {
   MAX_TAKE_SECONDS,
@@ -45,6 +46,7 @@ export default function CheckScreen() {
   const takeRecorder = useTakeRecorder();
   const microphone = useMicrophoneSelection(takeRecorder.recorder);
   const playback = useRecordingPlayback();
+  const { isPremium } = usePlan();
   const assessmentSavedRef = useRef(false);
   const [stepPhase, setStepPhase] = useState<StepPhase>('ready');
   const [currentStep, setCurrentStep] = useState(0);
@@ -247,8 +249,10 @@ export default function CheckScreen() {
                   isCreating={isCreatingDiagnosis}
                   error={diagnosisError}
                   recommendedDrill={recommendedDrill}
+                  isPremium={isPremium}
                   onRetry={() => createAiDiagnosis()}
                   onStartDrill={openRecommendedDrill}
+                  onSubscribe={() => router.push('/pricing')}
                 />
               ) : (
                 <ClarityConsentCard isAnalyzing={isAnalyzingClarity} onAnalyze={analyzeClarity} />
