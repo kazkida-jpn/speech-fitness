@@ -21,6 +21,10 @@
       "destination": "/api/index"
     },
     {
+      "source": "/social/(.*)",
+      "destination": "/api/index"
+    },
+    {
       "source": "/check",
       "destination": "/check.html"
     },
@@ -35,6 +39,28 @@
     {
       "source": "/pricing",
       "destination": "/pricing.html"
+    },
+    {
+      "source": "/welcome",
+      "destination": "/welcome.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/legal",
+      "destination": "/legal.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/social/publish",
+      "schedule": "0 0 * * 1,3,5"
     }
   ]
 }

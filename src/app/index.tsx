@@ -1,9 +1,12 @@
 import { Link, router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppFooter } from '@/components/AppFooter';
 import { AppHeader } from '@/components/AppHeader';
+import { PremiumBanner } from '@/components/PremiumBanner';
+import { LandingScreen } from '@/components/landing/LandingScreen';
 import { palette } from '@/constants/palette';
 import { DRILLS } from '@/lib/drills';
 import {
@@ -12,9 +15,40 @@ import {
   isHistoryUserSignedIn,
   localDateKey,
 } from '@/lib/progress';
+import {
+  hasStarted,
+  hasStartedServerSnapshot,
+  hasStartedSync,
+  subscribeStarted,
+} from '@/lib/onboarding';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
-export default function HomeScreen() {
+// Newcomers see the landing page at the root URL; anyone who has entered the app before,
+// or is signed in, goes straight to the home screen. The pre-rendered HTML is the landing
+// page; on web the stored flag is read synchronously during hydration so returning visitors
+// never see it flash.
+export default function RootScreen() {
+  const startedHere = useSyncExternalStore(
+    subscribeStarted,
+    hasStartedSync,
+    hasStartedServerSnapshot
+  );
+  const [startedElsewhere, setStartedElsewhere] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([hasStarted(), isHistoryUserSignedIn()]).then(([started, signedIn]) => {
+      if (active && (started || signedIn)) setStartedElsewhere(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return startedHere || startedElsewhere ? <HomeScreen /> : <LandingScreen />;
+}
+
+function HomeScreen() {
   const [month, setMonth] = useState(() => new Date());
   const [historyByDate, setHistoryByDate] = useState<
     Record<string, { seconds: number; sentences: number }>
@@ -82,6 +116,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
+        <PremiumBanner />
 
         <View style={styles.checkCard}>
           <Text style={styles.checkLabel}>次回の発話チェック</Text>
@@ -197,6 +232,7 @@ export default function HomeScreen() {
             Googleログインとクラウド保存はSupabase設定後に有効になります。
           </Text>
         )}
+        <AppFooter />
       </ScrollView>
     </SafeAreaView>
   );

@@ -32,3 +32,15 @@ create policy "assessment history is private" on public.assessment_sessions for 
 
 create index if not exists drill_sessions_user_date on public.drill_sessions(user_id, performed_at desc);
 create index if not exists assessment_sessions_user_date on public.assessment_sessions(user_id, performed_at desc);
+
+-- Log of promo posts already sent by /social/publish (see marketing/social/README.md).
+-- Written with the service role only, so no policies are granted.
+create table if not exists public.social_posts (
+  post_id text not null,
+  channel text not null check (channel in ('instagram', 'facebook')),
+  external_id text,
+  published_at timestamptz not null default now(),
+  primary key (post_id, channel)
+);
+
+alter table public.social_posts enable row level security;

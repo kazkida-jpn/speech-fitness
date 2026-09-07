@@ -53,3 +53,6 @@ example
 
 .vercel
 .env*
+
+# downloaded by scripts/social-render.mjs
+marketing/social/fonts/

@@ -20,7 +20,7 @@ Speech SDK が内部で使う `ws` や `bent` などは、Metro が API ルー�
 
 ## 公開方針
 
-公開は技術検証より後に行う。候補ドメインは `voice.learn-k.net` とし、公開時に既存DNS管理画面からVercel指定先へCNAMEを設定する。
+公開ドメインは `speech-fitness.learn-k.net`。お名前.com の DNS で `speech-fitness` を Vercel 指定の CNAME に向け、Vercel のプロジェクトにドメインを追加する。手順と残作業は `LAUNCH_CHECKLIST.md` を参照。
 
 ## 安全方針
 

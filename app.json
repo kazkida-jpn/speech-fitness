@@ -8,7 +8,6 @@
     "scheme": "speechfitness",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
       "infoPlist": {
         "NSMicrophoneUsageDescription": "発話フィットネスの測定と練習を録音するためにマイクを使用します。"
       }
@@ -24,7 +23,13 @@
     },
     "web": {
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "発話フィットネス",
+      "shortName": "発話フィットネス",
+      "lang": "ja",
+      "description": "毎日数分で、伝わる話し方を保つ発話トレーニング",
+      "themeColor": "#F6F3EC",
+      "backgroundColor": "#F6F3EC"
     },
     "plugins": [
       "expo-router",

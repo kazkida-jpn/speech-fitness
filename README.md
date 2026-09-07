@@ -96,7 +96,11 @@ pnpm vercel-build  # Web 書き出しと Vercel 用ページ配置
 
 ## 公開について
 
-現段階では公開しません。技術検証後、VercelへWeb版を展開し、将来の候補として `voice.learn-k.net` を使用します。
+合同会社LearnK のサービスとして `https://speech-fitness.learn-k.net` で公開します。公開までに必要な作業は `docs/LAUNCH_CHECKLIST.md` にまとめています。
+
+- `/` は初回訪問者にランディングページ、再訪者とログイン済みの人にホームを表示します。`/welcome` は常にランディングです。
+- 利用規約 `/terms`、プライバシーポリシー `/privacy`、特定商取引法に基づく表記 `/legal` の文面は `src/content/` にあります。会社情報と公開URLは `src/constants/site.ts` です。
+- ロゴとアイコンの元データは `assets/brand/` にあり、PNG は `scripts/render-brand.mjs` で生成します。
 
 ## 次の開発
 

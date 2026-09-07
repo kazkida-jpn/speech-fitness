@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BrandMark } from '@/components/BrandMark';
 import { palette } from '@/constants/palette';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
@@ -39,8 +40,13 @@ export function AppHeader() {
     <View style={styles.wrapper}>
       <View style={styles.mainRow}>
         <Link href="/" style={styles.brand}>
-          <Text style={styles.eyebrow}>SPEECH FITNESS</Text>
-          <Text style={styles.logo}>発話フィットネス</Text>
+          <View style={styles.brandRow}>
+            <BrandMark size={36} />
+            <View>
+              <Text style={styles.eyebrow}>SPEECH FITNESS</Text>
+              <Text style={styles.logo}>発話フィットネス</Text>
+            </View>
+          </View>
         </Link>
         {user ? (
           <View style={styles.account}>
@@ -104,6 +110,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   brand: { textDecorationLine: 'none' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   eyebrow: { color: palette.green, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   logo: { color: palette.ink, fontSize: 22, fontWeight: '800', marginTop: 2 },
   account: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },

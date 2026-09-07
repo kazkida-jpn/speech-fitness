@@ -51,7 +51,9 @@
     "lint": "expo lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "social:render": "node scripts/social-render.mjs",
+    "social:publish": "node scripts/social-publish.mjs"
   },
   "private": true
 }
