@@ -54,9 +54,12 @@ export function AppHeader() {
               <Text style={styles.avatarText}>{userLabel(user).slice(0, 1)}</Text>
             </View>
             <View style={styles.accountText}>
-              <Text style={styles.loginState}>ログイン中</Text>
               <Text style={styles.userName} numberOfLines={1}>
                 {userLabel(user)}
+              </Text>
+              {/* The email tells accounts apart when several share a display name. */}
+              <Text style={styles.loginState} numberOfLines={1}>
+                {user.email ?? 'ログイン中'}
               </Text>
             </View>
             <Pressable style={styles.logoutButton} onPress={() => supabase?.auth.signOut()}>
@@ -123,8 +126,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { color: palette.greenDark, fontSize: 13, fontWeight: '800' },
-  accountText: { maxWidth: 170 },
-  loginState: { color: palette.green, fontSize: 9, fontWeight: '800' },
+  accountText: { maxWidth: 220 },
+  loginState: { color: palette.muted, fontSize: 10, fontWeight: '600', marginTop: 1 },
   userName: { color: palette.ink, fontSize: 11, fontWeight: '700' },
   logoutButton: {
     borderWidth: 1,
