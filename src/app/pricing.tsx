@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
 import { palette } from '@/constants/palette';
+import { trackEvent } from '@/lib/analytics';
 import { openBillingPortal, startCheckout, syncPlan, usePlan } from '@/lib/billing';
 import { BILLING_PLANS, PREMIUM_FEATURES, TRIAL_DAYS, type BillingPlan } from '@/lib/plans';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -38,7 +39,10 @@ export default function PricingScreen() {
   useEffect(() => {
     if (params.checkout !== 'success') return;
     syncPlan()
-      .then(() => refresh())
+      .then((synced) => {
+        if (synced === 'premium') trackEvent('subscription_started');
+        refresh();
+      })
       .catch(() => {});
   }, [params.checkout, refresh]);
 

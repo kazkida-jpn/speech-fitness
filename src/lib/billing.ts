@@ -2,6 +2,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 
+import { trackEvent } from '@/lib/analytics';
 import type { ApiErrorBody } from '@/lib/assessment-types';
 import type { BillingPlan, Plan } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +32,7 @@ async function openStripePage(path: string, body?: unknown) {
 
 /** Sends the user to Stripe Checkout for the chosen plan. */
 export function startCheckout(plan: BillingPlan) {
+  trackEvent('begin_checkout', { plan });
   return openStripePage('/billing/checkout', { plan });
 }
 

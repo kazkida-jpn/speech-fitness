@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 
+import { AnalyticsTracker } from '@/components/AnalyticsTracker';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '@/constants/site';
 
 export default function RootLayout() {
@@ -15,6 +16,7 @@ export default function RootLayout() {
         <meta property="og:description" content={SITE_DESCRIPTION} />
       </Head>
       <StatusBar style="dark" />
+      <AnalyticsTracker />
       <Stack screenOptions={{ headerShown: false }} />
     </>
   );

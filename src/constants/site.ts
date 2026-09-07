@@ -17,4 +17,4 @@ export const COMPANY = {
 } as const;
 
 /** Date shown as 最終更新日 on every legal page. Bump when any legal text changes. */
-export const LEGAL_UPDATED = '2026年9月6日';
+export const LEGAL_UPDATED = '2026年9月7日';

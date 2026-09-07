@@ -8,6 +8,15 @@ import { SITE_NAME, SITE_URL } from '@/constants/site';
 // browser APIs here. Title and description come from <Head> in _layout.tsx and each screen;
 // Expo appends the favicon.ico link itself from app.json.
 export default function Root({ children }: PropsWithChildren) {
+  // Google Analytics 4. Page views are sent by AnalyticsTracker on each route change, so the
+  // automatic one is turned off to avoid double counting the first page.
+  // Only a well-formed measurement id is ever interpolated into the inline script.
+  const gaId = /^G-[A-Z0-9]{4,20}$/.test(process.env.EXPO_PUBLIC_GA_MEASUREMENT_ID ?? '')
+    ? process.env.EXPO_PUBLIC_GA_MEASUREMENT_ID
+    : undefined;
+  const gaInit = gaId
+    ? `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}',{send_page_view:false});`
+    : null;
   return (
     <html lang="ja">
       <head>
@@ -29,6 +38,12 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="twitter:card" content="summary_large_image" />
         <ScrollViewStyleReset />
         <style>{`body{background:${palette.cream}}`}</style>
+        {gaId && gaInit && (
+          <>
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+            <script dangerouslySetInnerHTML={{ __html: gaInit }} />
+          </>
+        )}
       </head>
       <body>{children}</body>
     </html>
