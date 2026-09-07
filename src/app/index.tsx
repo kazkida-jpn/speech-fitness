@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppFooter } from '@/components/AppFooter';
 import { AppHeader } from '@/components/AppHeader';
+import { ScreenTitle } from '@/components/ScreenTitle';
 import { PremiumBanner } from '@/components/PremiumBanner';
 import { LandingScreen } from '@/components/landing/LandingScreen';
 import { palette } from '@/constants/palette';
@@ -114,6 +115,7 @@ function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ScreenTitle title="ホーム" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
         <PremiumBanner />

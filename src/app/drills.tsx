@@ -10,6 +10,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
+import { ScreenTitle } from '@/components/ScreenTitle';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
 import { PremiumBanner } from '@/components/PremiumBanner';
 import { palette } from '@/constants/palette';
@@ -138,6 +139,7 @@ export default function DrillsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ScreenTitle title="ドリル" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
         {!active ? (

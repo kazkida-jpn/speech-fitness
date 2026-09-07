@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
+import { ScreenTitle } from '@/components/ScreenTitle';
 import { usePlan } from '@/lib/billing';
 import { palette } from '@/constants/palette';
 import { DRILLS } from '@/lib/drills';
@@ -45,6 +46,7 @@ export default function HistoryScreen() {
   );
   return (
     <SafeAreaView style={styles.safe}>
+      <ScreenTitle title="履歴" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
         <Text style={styles.title}>発話の履歴</Text>

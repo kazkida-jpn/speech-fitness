@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
+import { ScreenTitle } from '@/components/ScreenTitle';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
 import { PremiumBanner } from '@/components/PremiumBanner';
 import { AiDiagnosisCard } from '@/components/check/AiDiagnosisCard';
@@ -211,6 +212,7 @@ export default function CheckScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ScreenTitle title="発話チェック" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
         <PremiumBanner message="チェックは無料です。診断で勧められたドリルはプレミアムで練習できます。" />

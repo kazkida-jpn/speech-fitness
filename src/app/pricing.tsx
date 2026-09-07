@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/AppHeader';
+import { ScreenTitle } from '@/components/ScreenTitle';
 import { palette } from '@/constants/palette';
 import { trackEvent } from '@/lib/analytics';
 import { openBillingPortal, startCheckout, syncPlan, usePlan } from '@/lib/billing';
@@ -70,6 +71,7 @@ export default function PricingScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <ScreenTitle title="料金" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
         <Text style={styles.eyebrow}>PREMIUM</Text>
@@ -169,7 +171,7 @@ export default function PricingScreen() {
 
         <View style={styles.legal}>
           <Text style={styles.legalTitle}>特定商取引法に基づく表記</Text>
-          <Text style={styles.legalRow}>販売事業者: 合同会社ランケイ</Text>
+          <Text style={styles.legalRow}>販売事業者: 合同会社LearnK</Text>
           <Text style={styles.legalRow}>
             販売価格: 月額プラン 500円、年額プラン 3,980円（いずれも税込）
           </Text>
