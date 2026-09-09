@@ -17,7 +17,7 @@ import { palette } from '@/constants/palette';
 import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
 import { usePlan } from '@/lib/billing';
-import { DRILLS, type Drill } from '@/lib/drills';
+import { DRILLS, sessionSentences, type Drill } from '@/lib/drills';
 import { isDrillFree } from '@/lib/plans';
 import { saveDrillHistory } from '@/lib/progress';
 import { RECORDING_OPTIONS } from '@/lib/recorder';
@@ -113,7 +113,7 @@ export default function DrillsScreen() {
       // Practice continues offline; only the cloud record is missing.
       setMessage('練習記録を保存できませんでした。練習はそのまま続けられます。');
     }
-    if (sentenceIndex >= active.sentences.length - 1) {
+    if (sentenceIndex >= sentences.length - 1) {
       setPhase('complete');
     } else {
       setSentenceIndex((value) => value + 1);
@@ -134,7 +134,9 @@ export default function DrillsScreen() {
 
   const isLocked = (drill: Drill) => !isPremium && !isDrillFree(drill.id);
   const activeLocked = active !== null && !isPlanLoading && isLocked(active);
-  const progressRatio = active ? Math.min(1, completedSentences / active.sentences.length) : 0;
+  // Today's subset of the pool; the same set all day, a different one tomorrow.
+  const sentences = active ? sessionSentences(active) : [];
+  const progressRatio = active ? Math.min(1, completedSentences / sentences.length) : 0;
   const progressGreen = `rgba(24,122,100,${0.2 + progressRatio * 0.8})`;
 
   return (
@@ -196,7 +198,7 @@ export default function DrillsScreen() {
                   {completedSentences === 0
                     ? `10文・約3分。最初の1文から始めましょう。`
                     : phase === 'complete'
-                      ? `${active.sentences.length}文完了。今日の練習を記録しました。`
+                      ? `${sentences.length}文完了。今日の練習を記録しました。`
                       : `${completedSentences}文完了。続けるほど円が濃くなります。`}
                 </Text>
               </View>
@@ -229,11 +231,11 @@ export default function DrillsScreen() {
               <View style={styles.practiceCard}>
                 <View style={styles.progressRow}>
                   <Text style={styles.progress}>
-                    例文 {sentenceIndex + 1} / {active.sentences.length}
+                    例文 {sentenceIndex + 1} / {sentences.length}
                   </Text>
                   <Text style={styles.progress}>{completedSentences}文完了</Text>
                 </View>
-                <Text style={styles.sentence}>{active.sentences[sentenceIndex]}</Text>
+                <Text style={styles.sentence}>{sentences[sentenceIndex]}</Text>
                 <MicrophonePicker selection={microphone} enabled={phase === 'ready'} />
                 <View style={styles.micWrap}>
                   <View style={[styles.mic, phase === 'recording' && styles.micActive]}>
@@ -311,7 +313,7 @@ export default function DrillsScreen() {
                     </View>
                     <Pressable style={styles.primary} onPress={completeSentence}>
                       <Text style={styles.primaryText}>
-                        {sentenceIndex === active.sentences.length - 1
+                        {sentenceIndex === sentences.length - 1
                           ? 'ドリルを完了する'
                           : '完了して次の例文へ'}
                       </Text>
