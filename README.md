@@ -102,6 +102,20 @@ pnpm vercel-build  # Web 書き出しと Vercel 用ページ配置
 - 利用規約 `/terms`、プライバシーポリシー `/privacy`、特定商取引法に基づく表記 `/legal` の文面は `src/content/` にあります。会社情報と公開URLは `src/constants/site.ts` です。
 - ロゴとアイコンの元データは `assets/brand/` にあり、PNG は `scripts/render-brand.mjs` で生成します。
 
+## Supabaseの一時停止対策
+
+Supabaseの無料プランは、1週間ほどデータベースへのアクセスがないプロジェクトを自動的に一時停止します。利用が少ない時期でもタイマーが切れないように、`/health/keepalive` を用意しています。
+
+- `profiles` の件数だけを数える最小のクエリを1回実行し、`{"ok":true}` を返します。ユーザーデータは読み出しません。
+- `vercel.json` の Cron が毎日1回（UTC 6:00 / JST 15:00ごろ）呼び出します。Vercel の Hobby プランは Cron を1日1回・2本までしか実行できないため、これで上限ちょうどです。
+- 秘密情報なしで呼べるので、UptimeRobot などの外形監視から同じURLを叩けば二重の保険になります。
+
+```bash
+curl https://speech-fitness.learn-k.net/health/keepalive
+```
+
+一時停止されてしまった場合も、90日以内ならSupabaseのダッシュボードからワンクリックで復元できます。90日を過ぎると復元ボタンは消え、停止直前のバックアップをダウンロードして新しいプロジェクトへ移す作業が必要になります。
+
 ## 次の開発
 
 1. Googleログイン済み端末間の履歴同期
