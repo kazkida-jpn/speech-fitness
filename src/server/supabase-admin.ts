@@ -31,3 +31,18 @@ export async function setUserPlan(userId: string, plan: Plan) {
     .upsert({ user_id: userId, plan }, { onConflict: 'user_id' });
   if (error) throw error;
 }
+
+/**
+ * Runs the cheapest possible query against the project so it keeps registering database
+ * activity. Supabase pauses Free plan projects after about a week without any, which would
+ * take sign-in and history sync down with it. Called by /health/keepalive.
+ * Uses the secret key when it is set and the publishable key otherwise; either way the query
+ * only counts rows, so no user data is read.
+ */
+export async function pingSupabase(): Promise<{ ok: boolean; error?: string }> {
+  const client =
+    getSupabaseAdmin() ?? serverClient(process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+  if (!client) return { ok: false, error: 'Supabase is not configured' };
+  const { error } = await client.from('profiles').select('user_id', { head: true, count: 'exact' });
+  return error ? { ok: false, error: error.message } : { ok: true };
+}

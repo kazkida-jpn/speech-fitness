@@ -25,6 +25,10 @@
       "destination": "/api/index"
     },
     {
+      "source": "/health/(.*)",
+      "destination": "/api/index"
+    },
+    {
       "source": "/check",
       "destination": "/check.html"
     },
@@ -61,6 +65,10 @@
     {
       "path": "/social/publish",
       "schedule": "0 0 * * 1,3,5"
+    },
+    {
+      "path": "/health/keepalive",
+      "schedule": "0 6 * * *"
     }
   ]
 }
