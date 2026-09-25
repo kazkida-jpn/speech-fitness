@@ -103,8 +103,8 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: palette.cream },
   container: { width: '100%', maxWidth: 720, alignSelf: 'center', padding: 22 },
-  title: { color: palette.ink, fontSize: 28, fontWeight: '800', marginTop: 22 },
-  note: { color: palette.muted, fontSize: 13, lineHeight: 21, marginTop: 6 },
+  title: { color: palette.ink, fontSize: 30, fontWeight: '800', marginTop: 22 },
+  note: { color: palette.muted, fontSize: 16, lineHeight: 26, marginTop: 6 },
   empty: {
     backgroundColor: palette.white,
     borderRadius: 20,
@@ -112,8 +112,8 @@ const styles = StyleSheet.create({
     marginTop: 22,
     alignItems: 'center',
   },
-  emptyTitle: { color: palette.ink, fontSize: 17, fontWeight: '800' },
-  link: { color: palette.green, fontSize: 13, fontWeight: '800', marginTop: 15 },
+  emptyTitle: { color: palette.ink, fontSize: 19, fontWeight: '800' },
+  link: { color: palette.green, fontSize: 16, fontWeight: '800', marginTop: 15 },
   list: { gap: 9, marginTop: 20 },
   row: {
     backgroundColor: palette.white,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  date: { color: palette.ink, fontSize: 14, fontWeight: '800' },
-  drills: { color: palette.muted, fontSize: 11, marginTop: 4 },
-  value: { color: palette.greenDark, fontSize: 14, fontWeight: '800' },
+  date: { color: palette.ink, fontSize: 16, fontWeight: '800' },
+  drills: { color: palette.muted, fontSize: 14, marginTop: 4 },
+  value: { color: palette.greenDark, fontSize: 16, fontWeight: '800' },
 });

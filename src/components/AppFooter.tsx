@@ -41,6 +41,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   links: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  link: { color: palette.muted, fontSize: 11, fontWeight: '700', textDecorationLine: 'none' },
-  copyright: { color: palette.muted, fontSize: 11 },
+  link: { color: palette.muted, fontSize: 14, fontWeight: '700', textDecorationLine: 'none' },
+  copyright: { color: palette.muted, fontSize: 14 },
 });

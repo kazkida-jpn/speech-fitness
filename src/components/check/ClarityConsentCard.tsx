@@ -36,11 +36,11 @@ const styles = StyleSheet.create({
     padding: 17,
     marginBottom: 18,
   },
-  cloudConsentTitle: { color: palette.ink, fontSize: 16, fontWeight: '800' },
+  cloudConsentTitle: { color: palette.ink, fontSize: 18, fontWeight: '800' },
   cloudConsentText: {
     color: palette.muted,
-    fontSize: 12,
-    lineHeight: 19,
+    fontSize: 15,
+    lineHeight: 24,
     marginTop: 6,
     marginBottom: 13,
   },
@@ -51,5 +51,5 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   analysisButtonDisabled: { opacity: 0.55 },
-  analysisButtonText: { color: palette.white, fontSize: 14, fontWeight: '800' },
+  analysisButtonText: { color: palette.white, fontSize: 16, fontWeight: '800' },
 });

@@ -54,8 +54,8 @@ export function TakeResultsList({ sessionTexts, takes, onPlay }: Props) {
 const styles = StyleSheet.create({
   resultList: { gap: 10, marginTop: 22, marginBottom: 16 },
   resultGroup: { backgroundColor: palette.cream, borderRadius: 18, padding: 14, gap: 8 },
-  resultGroupLabel: { color: palette.greenDark, fontSize: 12, fontWeight: '800' },
-  resultReference: { color: palette.ink, fontSize: 12, lineHeight: 19, marginBottom: 2 },
+  resultGroupLabel: { color: palette.greenDark, fontSize: 15, fontWeight: '800' },
+  resultReference: { color: palette.ink, fontSize: 15, lineHeight: 24, marginBottom: 2 },
   resultRow: {
     backgroundColor: palette.white,
     borderRadius: 14,
@@ -64,14 +64,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  resultLabel: { color: palette.muted, fontSize: 12, fontWeight: '700' },
-  resultTime: { color: palette.ink, fontSize: 23, fontWeight: '800', marginTop: 3 },
-  resultMic: { color: palette.muted, fontSize: 10, marginTop: 3, maxWidth: 360 },
+  resultLabel: { color: palette.muted, fontSize: 15, fontWeight: '700' },
+  resultTime: { color: palette.ink, fontSize: 25, fontWeight: '800', marginTop: 3 },
+  resultMic: { color: palette.muted, fontSize: 12, marginTop: 3, maxWidth: 360 },
   playButton: {
     backgroundColor: palette.white,
     borderRadius: 14,
     paddingHorizontal: 15,
     paddingVertical: 11,
   },
-  playButtonText: { color: palette.greenDark, fontSize: 14, fontWeight: '800' },
+  playButtonText: { color: palette.greenDark, fontSize: 16, fontWeight: '800' },
 });

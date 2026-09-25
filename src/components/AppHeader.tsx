@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
   },
   brand: { textDecorationLine: 'none' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  eyebrow: { color: palette.green, fontSize: 10, fontWeight: '800', letterSpacing: 2 },
-  logo: { color: palette.ink, fontSize: 22, fontWeight: '800', marginTop: 2 },
+  eyebrow: { color: palette.green, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
+  logo: { color: palette.ink, fontSize: 24, fontWeight: '800', marginTop: 2 },
   account: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
   avatar: {
     width: 32,
@@ -103,10 +103,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: palette.greenDark, fontSize: 13, fontWeight: '800' },
+  avatarText: { color: palette.greenDark, fontSize: 16, fontWeight: '800' },
   accountText: { maxWidth: 220 },
-  loginState: { color: palette.muted, fontSize: 10, fontWeight: '600', marginTop: 1 },
-  userName: { color: palette.ink, fontSize: 11, fontWeight: '700' },
+  loginState: { color: palette.muted, fontSize: 12, fontWeight: '600', marginTop: 1 },
+  userName: { color: palette.ink, fontSize: 14, fontWeight: '700' },
   logoutButton: {
     borderWidth: 1,
     borderColor: palette.line,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 7,
   },
-  logoutText: { color: palette.muted, fontSize: 10, fontWeight: '700' },
+  logoutText: { color: palette.muted, fontSize: 12, fontWeight: '700' },
   loginButton: {
     backgroundColor: palette.white,
     borderWidth: 1,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  loginButtonText: { color: palette.greenDark, fontSize: 11, fontWeight: '800' },
+  loginButtonText: { color: palette.greenDark, fontSize: 14, fontWeight: '800' },
   navigation: { flexDirection: 'row', flexWrap: 'wrap', gap: 18, marginTop: 12 },
-  navLink: { color: palette.muted, fontSize: 11, fontWeight: '700', textDecorationLine: 'none' },
+  navLink: { color: palette.muted, fontSize: 14, fontWeight: '700', textDecorationLine: 'none' },
 });

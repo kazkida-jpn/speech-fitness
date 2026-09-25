@@ -34,11 +34,11 @@ export function CheckMetricsOverview() {
 
 const styles = StyleSheet.create({
   metricsSection: { marginTop: 28 },
-  sectionTitle: { color: palette.ink, fontSize: 18, fontWeight: '800', marginBottom: 12 },
+  sectionTitle: { color: palette.ink, fontSize: 20, fontWeight: '800', marginBottom: 12 },
   sectionNote: {
     color: palette.muted,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 25,
     marginTop: -5,
     marginBottom: 13,
   },
@@ -52,21 +52,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.line,
   },
-  metricTitle: { color: palette.greenDark, fontSize: 15, fontWeight: '800' },
+  metricTitle: { color: palette.greenDark, fontSize: 17, fontWeight: '800', flexShrink: 1 },
   metricTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 8,
   },
   pendingBadge: {
+    flexShrink: 0,
     color: palette.muted,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     backgroundColor: palette.cream,
     borderRadius: 999,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
-  metricBody: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 5 },
+  metricBody: { color: palette.muted, fontSize: 15, lineHeight: 23, marginTop: 5 },
 });

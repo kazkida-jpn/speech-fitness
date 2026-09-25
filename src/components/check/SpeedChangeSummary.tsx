@@ -27,7 +27,7 @@ export function SpeedChangeSummary({ averageSpeedChange }: Props) {
 
 const styles = StyleSheet.create({
   summaryCard: { backgroundColor: palette.mint, borderRadius: 18, padding: 17, marginBottom: 18 },
-  summaryLabel: { color: palette.greenDark, fontSize: 12, fontWeight: '700' },
-  summaryValue: { color: palette.ink, fontSize: 21, fontWeight: '800', marginTop: 4 },
-  summaryNote: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 8 },
+  summaryLabel: { color: palette.greenDark, fontSize: 15, fontWeight: '700' },
+  summaryValue: { color: palette.ink, fontSize: 23, fontWeight: '800', marginTop: 4 },
+  summaryNote: { color: palette.muted, fontSize: 15, lineHeight: 23, marginTop: 8 },
 });
