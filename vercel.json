@@ -7,6 +7,19 @@
       "includeFiles": "dist/server/**"
     }
   },
+  "redirects": [
+    {
+      "source": "/:path((?!billing/|social/|assessment$|diagnosis$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "speech-fitness-rouge.vercel.app"
+        }
+      ],
+      "destination": "https://speech-fitness.learn-k.net/:path",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/assessment",
