@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-import type { Plan } from '@/lib/plans';
+import { isAdminEmail, type Plan } from '@/lib/plans';
 
 // Server-only. Uses the secret key, which bypasses row level security.
 
@@ -23,11 +23,18 @@ export async function getUserFromRequest(request: Request) {
   return error ? null : data.user;
 }
 
-export async function setUserPlan(userId: string, plan: Plan) {
+/**
+ * Stores the user's plan and returns what was stored. Admin accounts stay premium no matter
+ * what Stripe says, so a webhook or sync can never downgrade them.
+ */
+export async function setUserPlan(userId: string, plan: Plan): Promise<Plan> {
   const admin = getSupabaseAdmin();
   if (!admin) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
+  const { data: lookup } = await admin.auth.admin.getUserById(userId);
+  const effective: Plan = isAdminEmail(lookup?.user?.email) ? 'premium' : plan;
   const { error } = await admin
     .from('profiles')
-    .upsert({ user_id: userId, plan }, { onConflict: 'user_id' });
+    .upsert({ user_id: userId, plan: effective }, { onConflict: 'user_id' });
   if (error) throw error;
+  return effective;
 }

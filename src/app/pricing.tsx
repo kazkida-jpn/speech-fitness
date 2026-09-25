@@ -11,7 +11,13 @@ import { signInWithGoogle, useAuthUser } from '@/lib/auth';
 import { openBillingPortal, startCheckout, syncPlan, usePlan } from '@/lib/billing';
 import { isBillingPlan } from '@/lib/pending-checkout';
 import { rememberPendingCheckout } from '@/lib/pending-checkout-storage';
-import { BILLING_PLANS, PREMIUM_FEATURES, TRIAL_DAYS, type BillingPlan } from '@/lib/plans';
+import {
+  BILLING_PLANS,
+  isAdminEmail,
+  PREMIUM_FEATURES,
+  TRIAL_DAYS,
+  type BillingPlan,
+} from '@/lib/plans';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 const TRIAL_STEPS = [
@@ -41,6 +47,7 @@ export default function PricingScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const resumedPlan = useRef<BillingPlan | null>(null);
   const signedOut = user === null;
+  const isAdmin = isAdminEmail(user?.email);
 
   // Back from Checkout: reconcile with Stripe instead of waiting for the webhook.
   useEffect(() => {
@@ -133,7 +140,12 @@ export default function PricingScreen() {
           <Text style={styles.statusValue}>
             {isLoading ? '確認中…' : isPremium ? 'プレミアム' : '無料'}
           </Text>
-          {isPremium && (
+          {isAdmin && (
+            <Text style={styles.statusNote}>
+              管理者アカウントのため、常にプレミアムで利用できます。
+            </Text>
+          )}
+          {isPremium && !isAdmin && (
             <Pressable
               style={[styles.secondaryButton, busyPlan === 'portal' && styles.disabled]}
               onPress={manage}
@@ -262,6 +274,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: { color: palette.muted, fontSize: 11, fontWeight: '700' },
   statusValue: { color: palette.ink, fontSize: 22, fontWeight: '800', marginTop: 4 },
+  statusNote: { color: palette.muted, fontSize: 12, lineHeight: 18, marginTop: 6 },
   featureCard: {
     backgroundColor: palette.amberCream,
     borderRadius: 18,

@@ -30,3 +30,14 @@ export const PREMIUM_FEATURES = [
   '測定履歴と推移の記録',
   '練習カレンダーの端末間同期',
 ];
+
+/**
+ * Accounts that are always premium, regardless of Stripe. Used for checking the app without
+ * paying. Sign-in is Google OAuth, so the email on the session is verified.
+ */
+export const ADMIN_EMAILS = ['kazkida@learn-k.net'];
+
+export function isAdminEmail(email: string | null | undefined) {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.trim().toLowerCase());
+}

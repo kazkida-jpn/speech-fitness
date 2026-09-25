@@ -15,8 +15,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'ログインが必要です。' }, { status: 401 });
   }
   try {
-    const plan = await findSubscriptionPlan(stripe, user.id);
-    await setUserPlan(user.id, plan);
+    const plan = await setUserPlan(user.id, await findSubscriptionPlan(stripe, user.id));
     return Response.json({ plan });
   } catch (error) {
     console.error('plan sync failed', error);

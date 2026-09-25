@@ -4,7 +4,7 @@ import { Linking, Platform } from 'react-native';
 
 import { trackEvent } from '@/lib/analytics';
 import type { ApiErrorBody } from '@/lib/assessment-types';
-import type { BillingPlan, Plan } from '@/lib/plans';
+import { isAdminEmail, type BillingPlan, type Plan } from '@/lib/plans';
 import { supabase } from '@/lib/supabase';
 
 // Client side of billing: reads the plan from Supabase and hands the user to Stripe.
@@ -54,6 +54,7 @@ export async function fetchPlan(): Promise<Plan> {
   if (!supabase) return 'free';
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) return 'free';
+  if (isAdminEmail(userData.user.email)) return 'premium';
   const { data } = await supabase
     .from('profiles')
     .select('plan')
