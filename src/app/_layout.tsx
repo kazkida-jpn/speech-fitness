@@ -3,6 +3,7 @@ import Head from 'expo-router/head';
 import { StatusBar } from 'expo-status-bar';
 
 import { AnalyticsTracker } from '@/components/AnalyticsTracker';
+import { CheckoutResume } from '@/components/CheckoutResume';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '@/constants/site';
 
 export default function RootLayout() {
@@ -17,6 +18,7 @@ export default function RootLayout() {
       </Head>
       <StatusBar style="dark" />
       <AnalyticsTracker />
+      <CheckoutResume />
       <Stack screenOptions={{ headerShown: false }} />
     </>
   );

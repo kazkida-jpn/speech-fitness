@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,7 +7,10 @@ import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
 import { palette } from '@/constants/palette';
 import { trackEvent } from '@/lib/analytics';
+import { signInWithGoogle, useAuthUser } from '@/lib/auth';
 import { openBillingPortal, startCheckout, syncPlan, usePlan } from '@/lib/billing';
+import { isBillingPlan } from '@/lib/pending-checkout';
+import { rememberPendingCheckout } from '@/lib/pending-checkout-storage';
 import { BILLING_PLANS, PREMIUM_FEATURES, TRIAL_DAYS, type BillingPlan } from '@/lib/plans';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
@@ -31,10 +34,13 @@ const TRIAL_STEPS = [
 ];
 
 export default function PricingScreen() {
-  const params = useLocalSearchParams<{ checkout?: string }>();
+  const params = useLocalSearchParams<{ checkout?: string; plan?: string }>();
+  const user = useAuthUser();
   const { plan, isPremium, isLoading, refresh } = usePlan();
   const [busyPlan, setBusyPlan] = useState<BillingPlan | 'portal' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const resumedPlan = useRef<BillingPlan | null>(null);
+  const signedOut = user === null;
 
   // Back from Checkout: reconcile with Stripe instead of waiting for the webhook.
   useEffect(() => {
@@ -57,6 +63,29 @@ export default function PricingScreen() {
       setBusyPlan(null);
     }
   };
+
+  // A signed-out visitor picks a plan: remember it, sign in, and CheckoutResume brings
+  // them back here with ?plan= so the checkout continues without a second click.
+  const signInThenSubscribe = async (billingPlan: BillingPlan) => {
+    setMessage(null);
+    setBusyPlan(billingPlan);
+    try {
+      await rememberPendingCheckout(billingPlan);
+      await signInWithGoogle();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'ログインを開始できませんでした。');
+      setBusyPlan(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!isBillingPlan(params.plan) || resumedPlan.current) return;
+    if (!user || plan === null || isPremium) return;
+    const chosen = params.plan;
+    resumedPlan.current = chosen;
+    // Deferred so the effect itself does not set state; it runs once per page load.
+    queueMicrotask(() => subscribe(chosen));
+  }, [params.plan, user, plan, isPremium]);
 
   const manage = async () => {
     setMessage(null);
@@ -91,6 +120,11 @@ export default function PricingScreen() {
         {params.checkout === 'cancel' && (
           <View style={styles.notice}>
             <Text style={styles.noticeText}>お手続きを中断しました。いつでも再開できます。</Text>
+          </View>
+        )}
+        {isBillingPlan(params.plan) && busyPlan === params.plan && (
+          <View style={styles.notice}>
+            <Text style={styles.noticeText}>ログインできました。決済ページへ移動しています…</Text>
           </View>
         )}
 
@@ -152,10 +186,16 @@ export default function PricingScreen() {
                   <Text style={styles.planNote}>{item.note}</Text>
                   <Pressable
                     style={[styles.primaryButton, busyPlan !== null && styles.disabled]}
-                    onPress={() => subscribe(key)}
-                    disabled={busyPlan !== null || plan === null}>
+                    onPress={() => (signedOut ? signInThenSubscribe(key) : subscribe(key))}
+                    disabled={busyPlan !== null || plan === null || user === undefined}>
                     <Text style={styles.primaryButtonText}>
-                      {busyPlan === key ? '決済ページへ移動中…' : `${TRIAL_DAYS}日間無料で始める`}
+                      {busyPlan === key
+                        ? signedOut
+                          ? 'ログイン画面へ移動中…'
+                          : '決済ページへ移動中…'
+                        : signedOut
+                          ? 'Googleでログインして始める'
+                          : `${TRIAL_DAYS}日間無料で始める`}
                     </Text>
                   </Pressable>
                 </View>
@@ -166,6 +206,11 @@ export default function PricingScreen() {
 
         {!isSupabaseConfigured && (
           <Text style={styles.hint}>ログイン機能の設定後にお申し込みいただけます。</Text>
+        )}
+        {isSupabaseConfigured && signedOut && !isPremium && (
+          <Text style={styles.hint}>
+            お申し込みにはGoogleログインが必要です。ログイン後、そのまま決済ページへ進みます。
+          </Text>
         )}
         {message && <Text style={styles.error}>{message}</Text>}
 

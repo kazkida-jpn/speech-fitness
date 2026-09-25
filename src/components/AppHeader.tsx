@@ -1,10 +1,10 @@
 import type { User } from '@supabase/supabase-js';
 import { Link } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BrandMark } from '@/components/BrandMark';
 import { palette } from '@/constants/palette';
+import { signInWithGoogle, useAuthUser } from '@/lib/auth';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 function userLabel(user: User) {
@@ -12,29 +12,7 @@ function userLabel(user: User) {
 }
 
 export function AppHeader() {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    supabase?.auth.getUser().then(({ data }) => {
-      if (active) setUser(data.user ?? null);
-    });
-    const subscription = supabase?.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => {
-      active = false;
-      subscription?.data.subscription.unsubscribe();
-    };
-  }, []);
-
-  const signInWithGoogle = async () => {
-    if (!supabase) return;
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined },
-    });
-  };
+  const user = useAuthUser();
 
   return (
     <View style={styles.wrapper}>
