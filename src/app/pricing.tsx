@@ -49,16 +49,20 @@ export default function PricingScreen() {
   const signedOut = user === null;
   const isAdmin = isAdminEmail(user?.email);
 
-  // Back from Checkout: reconcile with Stripe instead of waiting for the webhook.
+  // Reconcile with Stripe on every signed-in visit rather than trusting the webhook alone:
+  // a delivery missed while the database was unreachable would otherwise leave a stale plan.
+  // Back from Checkout the same pass also records the start of the subscription.
+  const userId = user?.id;
   useEffect(() => {
-    if (params.checkout !== 'success') return;
+    if (!userId) return;
     syncPlan()
       .then((synced) => {
-        if (synced === 'premium') trackEvent('subscription_started');
+        if (synced === 'premium' && params.checkout === 'success')
+          trackEvent('subscription_started');
         refresh();
       })
       .catch(() => {});
-  }, [params.checkout, refresh]);
+  }, [userId, params.checkout, refresh]);
 
   const subscribe = async (billingPlan: BillingPlan) => {
     setMessage(null);
