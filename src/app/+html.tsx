@@ -38,7 +38,7 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="twitter:card" content="summary_large_image" />
         <ScrollViewStyleReset />
         {/* Desktop viewers sit further from the screen than phone users, so scale the whole layout up a step there. */}
-        <style>{`body{background:${palette.cream}}@media (min-width:900px){html{zoom:1.15}}`}</style>
+        <style>{`body{background:${palette.cream}}@media (min-width:900px){html{zoom:1.25}}`}</style>
         {gaId && gaInit && (
           <>
             <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
