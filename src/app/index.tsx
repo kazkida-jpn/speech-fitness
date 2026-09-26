@@ -51,6 +51,14 @@ export default function RootScreen() {
 
 function HomeScreen() {
   const [month, setMonth] = useState(() => new Date());
+  // The day cells are squares sized by the grid width, so on a wide screen they are several
+  // times larger than on a phone. The text inside scales with the cell so it fills the square
+  // instead of sitting as a small label in the middle. Before the first layout pass (and in
+  // the pre-rendered HTML) the phone-sized fallback applies.
+  const [gridWidth, setGridWidth] = useState(0);
+  const cellSize = gridWidth * 0.134;
+  const dayNumberSize = cellSize ? Math.min(32, Math.max(14, Math.round(cellSize * 0.26))) : 14;
+  const dayMinutesSize = cellSize ? Math.min(22, Math.max(12, Math.round(cellSize * 0.18))) : 12;
   const [historyByDate, setHistoryByDate] = useState<
     Record<string, { seconds: number; sentences: number }>
   >({});
@@ -195,7 +203,9 @@ function HomeScreen() {
               </Text>
             ))}
           </View>
-          <View style={styles.calendarGrid}>
+          <View
+            style={styles.calendarGrid}
+            onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}>
             {cells.map((day, index) => {
               if (!day) return <View key={`empty-${index}`} style={styles.dayCellEmpty} />;
               const value = historyByDate[localDateKey(new Date(year, monthIndex, day))];
@@ -212,9 +222,21 @@ function HomeScreen() {
                         : '#F1F3F2';
               return (
                 <View key={day} style={[styles.dayCell, { backgroundColor: intensity }]}>
-                  <Text style={[styles.dayNumber, minutes >= 6 && styles.dayTextLight]}>{day}</Text>
+                  <Text
+                    style={[
+                      styles.dayNumber,
+                      { fontSize: dayNumberSize },
+                      minutes >= 6 && styles.dayTextLight,
+                    ]}>
+                    {day}
+                  </Text>
                   {minutes > 0 && (
-                    <Text style={[styles.dayMinutes, minutes >= 6 && styles.dayTextLight]}>
+                    <Text
+                      style={[
+                        styles.dayMinutes,
+                        { fontSize: dayMinutesSize },
+                        minutes >= 6 && styles.dayTextLight,
+                      ]}>
                       {minutes}分
                     </Text>
                   )}
@@ -313,8 +335,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCellEmpty: { width: '13.4%', aspectRatio: 1, margin: '0.44%' },
-  dayNumber: { color: palette.ink, fontSize: 14, fontWeight: '700' },
-  dayMinutes: { color: palette.greenDark, fontSize: 12, fontWeight: '800', marginTop: 2 },
+  dayNumber: { color: palette.ink, fontWeight: '700' },
+  dayMinutes: { color: palette.greenDark, fontWeight: '800', marginTop: 2 },
   dayTextLight: { color: palette.white },
   monthSummary: { color: palette.muted, fontSize: 14, marginTop: 12 },
   setupNote: {
