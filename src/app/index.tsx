@@ -6,7 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppFooter } from '@/components/AppFooter';
 import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
-import { PremiumBanner } from '@/components/PremiumBanner';
 import { LandingScreen } from '@/components/landing/LandingScreen';
 import { palette } from '@/constants/palette';
 import { DRILLS } from '@/lib/drills';
@@ -126,10 +125,12 @@ function HomeScreen() {
       <ScreenTitle title="ホーム" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
-        <PremiumBanner />
 
         <View style={styles.checkCard}>
-          <Text style={styles.checkLabel}>次回の発話チェック</Text>
+          <View style={styles.checkLabelRow}>
+            <Text style={styles.checkLabel}>次回の発話チェック</Text>
+            <Text style={styles.freePill}>{isSignedIn ? '無料' : '無料・ログイン不要'}</Text>
+          </View>
           <Text style={styles.checkValue}>
             {daysUntilCheck === 0 ? '今週のチェックができます' : `あと ${daysUntilCheck} 日`}
           </Text>
@@ -266,7 +267,18 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: palette.cream },
   container: { width: '100%', maxWidth: 820, alignSelf: 'center', padding: 22, paddingBottom: 50 },
   checkCard: { backgroundColor: palette.greenDark, borderRadius: 24, padding: 22 },
+  checkLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   checkLabel: { color: '#CBE9DD', fontSize: 15, fontWeight: '700' },
+  freePill: {
+    color: palette.greenDark,
+    backgroundColor: palette.mint,
+    fontSize: 13,
+    fontWeight: '800',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    overflow: 'hidden',
+  },
   checkValue: { color: palette.white, fontSize: 29, fontWeight: '800', marginTop: 5 },
   checkNote: { color: '#E6F4EF', fontSize: 16, lineHeight: 25, marginTop: 7 },
   checkButton: {

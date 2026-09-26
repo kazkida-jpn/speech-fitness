@@ -12,7 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
-import { PremiumBanner } from '@/components/PremiumBanner';
 import { palette } from '@/constants/palette';
 import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
@@ -146,7 +145,6 @@ export default function DrillsScreen() {
         <AppHeader />
         {!active ? (
           <>
-            <PremiumBanner message="無料は2種類。8種類すべてのドリルと測定履歴が使えます。" />
             <Text style={styles.hero}>今日鍛えるところを選びましょう</Text>
             <Text style={styles.intro}>
               点数はつきません。例文を読み、自分の声を聞いて、少しずつ習慣にします。
@@ -162,6 +160,9 @@ export default function DrillsScreen() {
                     <View style={styles.drillTitleRow}>
                       <Text style={styles.drillTitle}>{drill.title}</Text>
                       {locked && <Text style={styles.premiumBadge}>プレミアム</Text>}
+                      {!locked && !isPremium && !isPlanLoading && (
+                        <Text style={styles.freeBadge}>無料</Text>
+                      )}
                     </View>
                     <Text style={styles.drillBody}>{drill.description}</Text>
                     <Text style={styles.startLink}>
@@ -207,10 +208,10 @@ export default function DrillsScreen() {
               <View style={styles.completeCard}>
                 <Text style={styles.completeTitle}>このドリルはプレミアムで利用できます</Text>
                 <Text style={styles.completeNote}>
-                  8種類すべてのドリルと測定履歴が使えます。初回は14日間無料です。
+                  8種類すべてのドリルと測定履歴が使えます。初回14日間は無料でお試しできます。
                 </Text>
                 <Pressable style={styles.primary} onPress={() => router.push('/pricing')}>
-                  <Text style={styles.primaryText}>14日間無料で始める</Text>
+                  <Text style={styles.primaryText}>14日間無料で試す</Text>
                 </Pressable>
               </View>
             ) : phase === 'complete' ? (
@@ -342,6 +343,15 @@ const styles = StyleSheet.create({
   premiumBadge: {
     color: palette.amber,
     backgroundColor: palette.amberSoft,
+    fontSize: 12,
+    fontWeight: '800',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  freeBadge: {
+    color: palette.greenDark,
+    backgroundColor: palette.white,
     fontSize: 12,
     fontWeight: '800',
     borderRadius: 999,

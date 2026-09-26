@@ -211,7 +211,7 @@ export default function PricingScreen() {
                           : '決済ページへ移動中…'
                         : signedOut
                           ? 'Googleでログインして始める'
-                          : `${TRIAL_DAYS}日間無料で始める`}
+                          : `${TRIAL_DAYS}日間無料で試す`}
                     </Text>
                   </Pressable>
                 </View>

@@ -91,10 +91,10 @@ export function AiDiagnosisCard({
             <View style={styles.paywallCard}>
               <Text style={styles.paywallTitle}>診断に合わせた練習を続ける</Text>
               <Text style={styles.paywallText}>
-                AIが選んだドリル、8種類すべてのドリル、測定履歴はプレミアムで利用できます。初回は14日間無料です。
+                AIが選んだドリル、8種類すべてのドリル、測定履歴はプレミアムで利用できます。初回14日間は無料でお試しできます。
               </Text>
               <Pressable style={styles.recommendedDrillButton} onPress={onSubscribe}>
-                <Text style={styles.recommendedDrillButtonText}>14日間無料で始める</Text>
+                <Text style={styles.recommendedDrillButtonText}>14日間無料で試す</Text>
               </Pressable>
               <Pressable onPress={() => setIsPaywallOpen(false)}>
                 <Text style={styles.paywallClose}>今は閉じる</Text>

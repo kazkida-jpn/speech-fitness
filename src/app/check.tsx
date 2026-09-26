@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
-import { PremiumBanner } from '@/components/PremiumBanner';
 import { AiDiagnosisCard } from '@/components/check/AiDiagnosisCard';
 import { CheckMetricsOverview } from '@/components/check/CheckMetricsOverview';
 import { ClarityConsentCard } from '@/components/check/ClarityConsentCard';
@@ -215,11 +214,11 @@ export default function CheckScreen() {
       <ScreenTitle title="発話チェック" />
       <ScrollView contentContainerStyle={styles.container}>
         <AppHeader />
-        <PremiumBanner message="チェックは無料です。診断で勧められたドリルはプレミアムで練習できます。" />
         <View style={styles.header}>
           <View>
             <Text style={styles.eyebrow}>WEEKLY CHECK</Text>
             <Text style={styles.logo}>発話チェック</Text>
+            {!isPremium && <Text style={styles.freePill}>無料・ログイン不要</Text>}
           </View>
           <View style={styles.dayBadge}>
             <Text style={styles.dayLabel}>継続</Text>
@@ -362,6 +361,18 @@ const styles = StyleSheet.create({
   },
   eyebrow: { color: palette.green, fontSize: 14, fontWeight: '800', letterSpacing: 2 },
   logo: { color: palette.ink, fontSize: 25, fontWeight: '800', marginTop: 3 },
+  freePill: {
+    alignSelf: 'flex-start',
+    color: palette.greenDark,
+    backgroundColor: palette.mint,
+    fontSize: 13,
+    fontWeight: '800',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
   dayBadge: {
     backgroundColor: palette.white,
     borderRadius: 16,

@@ -65,7 +65,7 @@ export default function HistoryScreen() {
               練習は記録されています。プレミアムに登録すると、日ごとの時間と例文数、過去の自分との比較が表示されます。
             </Text>
             <Link href="/pricing" style={styles.link}>
-              14日間無料で始める
+              14日間無料で試す
             </Link>
           </View>
         ) : rows.length === 0 ? (
