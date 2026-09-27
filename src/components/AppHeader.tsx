@@ -20,10 +20,7 @@ export function AppHeader() {
         <Link href="/" style={styles.brand}>
           <View style={styles.brandRow}>
             <BrandMark size={36} />
-            <View>
-              <Text style={styles.eyebrow}>SPEECH FITNESS</Text>
-              <Text style={styles.logo}>発話フィットネス</Text>
-            </View>
+            <Text style={styles.logo}>発話フィットネス</Text>
           </View>
         </Link>
         {user ? (
@@ -92,8 +89,7 @@ const styles = StyleSheet.create({
   },
   brand: { textDecorationLine: 'none' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  eyebrow: { color: palette.green, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
-  logo: { color: palette.ink, fontSize: 24, fontWeight: '800', marginTop: 2 },
+  logo: { color: palette.ink, fontSize: 24, fontWeight: '800' },
   account: { flexDirection: 'row', alignItems: 'center', gap: 8, maxWidth: '100%' },
   avatar: {
     width: 32,

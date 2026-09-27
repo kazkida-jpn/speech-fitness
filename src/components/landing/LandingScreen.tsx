@@ -98,10 +98,7 @@ export function LandingScreen() {
         <View style={styles.topBar}>
           <View style={styles.brand}>
             <BrandMark size={34} />
-            <View>
-              <Text style={styles.eyebrow}>SPEECH FITNESS</Text>
-              <Text style={styles.brandName}>{SITE_NAME}</Text>
-            </View>
+            <Text style={styles.brandName}>{SITE_NAME}</Text>
           </View>
           <View style={styles.topLinks}>
             <Link href="/pricing" style={styles.topLink}>
@@ -121,7 +118,7 @@ export function LandingScreen() {
           <Text style={styles.heroLead}>
             在宅勤務や退職で会話が減り、「言葉が出にくい」「滑舌が落ちた」と感じていませんか。
             {SITE_NAME}
-            は、週1回の発話チェックと毎日2〜5分のドリルで、伝わる話し方を測り、鍛え、変化を見える化します。
+            は、週1回の発話チェックと毎日2〜5分のドリルで、あなたの発話を測り、鍛え、変化を見える化します。
           </Text>
           <View style={styles.heroActions}>
             <Link href="/check" asChild>
@@ -137,7 +134,9 @@ export function LandingScreen() {
 
         <Text style={styles.sectionTitle}>発話チェックで分かること</Text>
         <Text style={styles.sectionLead}>
-          3つの例文を、自然な速さと早口で読むだけ。録音はブラウザの中に留まります。結果はAIコーチが、やさしい言葉の診断文にまとめます。
+          3つの例文を、それぞれ2回、自然な速さと早口で読むだけ。AIコーチが、あなたの発話の弱点をわかりやすい言葉で診断し、弱点克服のためのドリルを提案します。ドリルは
+          {DRILLS.length}種類あり、うち{FREE_DRILL_IDS.length}
+          つは無料で利用して頂けます。あなたの発話したデータは診断後すぐに破棄され、サーバーには保存しません。
         </Text>
         <View style={styles.valueGrid}>
           {CHECK_RESULTS.map((item) => (
@@ -288,7 +287,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  eyebrow: { color: palette.green, fontSize: 12, fontWeight: '800', letterSpacing: 2 },
   brandName: { color: palette.ink, fontSize: 20, fontWeight: '800' },
   topLinks: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   topLink: { color: palette.muted, fontSize: 15, fontWeight: '700', textDecorationLine: 'none' },
