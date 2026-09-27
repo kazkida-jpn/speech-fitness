@@ -35,6 +35,7 @@ import { averageSpeedChange, compareWordsBySpeed } from '@/lib/clarity-metrics';
 import { buildDiagnosisRequest, recommendedDrillIds } from '@/lib/diagnosis';
 import { DRILLS, type Drill } from '@/lib/drills';
 import { formatTime } from '@/lib/format';
+import { FREE_DRILL_IDS, isDrillFree } from '@/lib/plans';
 import { saveAssessmentHistory } from '@/lib/progress';
 import { convertRecordingToAssessmentWav } from '@/lib/wav';
 
@@ -260,6 +261,27 @@ export default function CheckScreen() {
               ) : (
                 <ClarityConsentCard isAnalyzing={isAnalyzingClarity} onAnalyze={analyzeClarity} />
               )}
+              {!isPremium && (
+                <View style={styles.freeDrillsCard}>
+                  <Text style={styles.freeDrillsTitle}>まず、無料のドリルから</Text>
+                  <Text style={styles.freeDrillsNote}>
+                    {DRILLS.length}種類のドリルのうち、この{FREE_DRILL_IDS.length}
+                    つはログインなしで練習できます。1回10文、約3分です。
+                  </Text>
+                  {DRILLS.filter((drill) => isDrillFree(drill.id)).map((drill) => (
+                    <Pressable
+                      key={drill.id}
+                      style={[styles.freeDrillRow, { backgroundColor: drill.accent }]}
+                      onPress={() =>
+                        router.push({ pathname: '/drills', params: { drill: drill.id } })
+                      }>
+                      <Text style={styles.freeDrillTitle}>{drill.title}</Text>
+                      <Text style={styles.freeDrillBody}>{drill.description}</Text>
+                      <Text style={styles.freeDrillLink}>始める →</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
               <View style={styles.restartActions}>
                 <Pressable style={styles.primaryButton} onPress={() => restartTest(false)}>
                   <Text style={styles.primaryButtonText}>同じ3例文でもう一度発話する</Text>
@@ -428,6 +450,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButtonText: { color: palette.white, fontSize: 19, fontWeight: '800' },
+  freeDrillsCard: {
+    backgroundColor: palette.cream,
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 18,
+    gap: 10,
+  },
+  freeDrillsTitle: { color: palette.ink, fontSize: 19, fontWeight: '800' },
+  freeDrillsNote: { color: palette.muted, fontSize: 15, lineHeight: 24 },
+  freeDrillRow: { borderRadius: 14, padding: 14 },
+  freeDrillTitle: { color: palette.ink, fontSize: 17, fontWeight: '800' },
+  freeDrillBody: { color: palette.muted, fontSize: 15, lineHeight: 23, marginTop: 4 },
+  freeDrillLink: { color: palette.greenDark, fontSize: 15, fontWeight: '800', marginTop: 8 },
   restartActions: { gap: 12 },
   secondaryButton: {
     backgroundColor: palette.white,

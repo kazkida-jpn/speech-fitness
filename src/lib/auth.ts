@@ -15,6 +15,25 @@ export async function signInWithGoogle() {
   });
 }
 
+/**
+ * Synchronous hint for web. Supabase keeps the session in localStorage under
+ * "sb-<project>-auth-token", so its presence means this browser was signed in last time. The
+ * root screen uses it to pick the home screen before the first paint instead of flashing the
+ * landing page at returning members; the real session read then confirms or corrects it.
+ */
+export function hasStoredSessionSync() {
+  if (!supabase || typeof window === 'undefined') return false;
+  try {
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index);
+      if (key?.startsWith('sb-') && key.endsWith('-auth-token')) return true;
+    }
+  } catch {
+    // Storage can be blocked in private browsing; the async read decides instead.
+  }
+  return false;
+}
+
 /** The signed-in user; `undefined` until the first read completes, `null` when signed out. */
 export function useAuthUser() {
   const [user, setUser] = useState<User | null | undefined>(supabase ? undefined : null);

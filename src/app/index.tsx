@@ -1,5 +1,5 @@
 import { Link, router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
 import { LandingScreen } from '@/components/landing/LandingScreen';
 import { palette } from '@/constants/palette';
+import { hasStoredSessionSync, useAuthUser } from '@/lib/auth';
 import { DRILLS } from '@/lib/drills';
 import {
   getAssessmentHistory,
@@ -15,37 +16,20 @@ import {
   isHistoryUserSignedIn,
   localDateKey,
 } from '@/lib/progress';
-import {
-  hasStarted,
-  hasStartedServerSnapshot,
-  hasStartedSync,
-  subscribeStarted,
-} from '@/lib/onboarding';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
-// Newcomers see the landing page at the root URL; anyone who has entered the app before,
-// or is signed in, goes straight to the home screen. The pre-rendered HTML is the landing
-// page; on web the stored flag is read synchronously during hydration so returning visitors
-// never see it flash.
+// Signed-out visitors see the landing page at the root URL, whether it is their first visit
+// or not; the home screen with the calendar and the recommended drills is for members. The
+// pre-rendered HTML is the landing page. Until the session has been read, the stored-session
+// hint decides, so a returning member does not see the landing page flash.
+const noopSubscribe = () => () => {};
+const noStoredSession = () => false;
+
 export default function RootScreen() {
-  const startedHere = useSyncExternalStore(
-    subscribeStarted,
-    hasStartedSync,
-    hasStartedServerSnapshot
-  );
-  const [startedElsewhere, setStartedElsewhere] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    Promise.all([hasStarted(), isHistoryUserSignedIn()]).then(([started, signedIn]) => {
-      if (active && (started || signedIn)) setStartedElsewhere(true);
-    });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return startedHere || startedElsewhere ? <HomeScreen /> : <LandingScreen />;
+  const user = useAuthUser();
+  const storedSession = useSyncExternalStore(noopSubscribe, hasStoredSessionSync, noStoredSession);
+  const isSignedIn = user === undefined ? storedSession : Boolean(user);
+  return isSignedIn ? <HomeScreen /> : <LandingScreen />;
 }
 
 function HomeScreen() {
@@ -129,7 +113,7 @@ function HomeScreen() {
         <View style={styles.checkCard}>
           <View style={styles.checkLabelRow}>
             <Text style={styles.checkLabel}>次回の発話チェック</Text>
-            <Text style={styles.freePill}>{isSignedIn ? '無料' : '無料・ログイン不要'}</Text>
+            <Text style={styles.freePill}>無料</Text>
           </View>
           <Text style={styles.checkValue}>
             {daysUntilCheck === 0 ? '今週のチェックができます' : `あと ${daysUntilCheck} 日`}
@@ -178,14 +162,6 @@ function HomeScreen() {
           )}
         </View>
         <View style={styles.calendarCard}>
-          {!isSignedIn && (
-            <View style={styles.loginNotice}>
-              <Text style={styles.loginNoticeTitle}>ログインすると練習記録を残せます</Text>
-              <Text style={styles.loginNoticeText}>
-                ドリルはそのままお試しいただけます。ログイン後の練習は日ごとに記録されます。
-              </Text>
-            </View>
-          )}
           <View style={styles.monthNav}>
             <Pressable onPress={() => setMonth(new Date(year, monthIndex - 1, 1))}>
               <Text style={styles.monthArrow}>‹</Text>
@@ -317,9 +293,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.line,
   },
-  loginNotice: { backgroundColor: '#FFF7D6', borderRadius: 14, padding: 14, marginBottom: 12 },
-  loginNoticeTitle: { color: palette.ink, fontSize: 16, fontWeight: '800' },
-  loginNoticeText: { color: palette.muted, fontSize: 14, lineHeight: 23, marginTop: 3 },
   monthNav: {
     flexDirection: 'row',
     justifyContent: 'center',

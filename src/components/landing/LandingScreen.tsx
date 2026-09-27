@@ -1,6 +1,5 @@
 import Head from 'expo-router/head';
-import { Link, router, usePathname } from 'expo-router';
-import { useState } from 'react';
+import { Link } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,9 +7,24 @@ import { AppFooter } from '@/components/AppFooter';
 import { BrandMark } from '@/components/BrandMark';
 import { palette } from '@/constants/palette';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from '@/constants/site';
+import { signInWithGoogle } from '@/lib/auth';
 import { DRILLS } from '@/lib/drills';
-import { markStarted } from '@/lib/onboarding';
 import { BILLING_PLANS, FREE_DRILL_IDS, PREMIUM_FEATURES, TRIAL_DAYS } from '@/lib/plans';
+import { isSupabaseConfigured } from '@/lib/supabase';
+
+// What the weekly check reports, in the order the result screen shows it.
+const CHECK_RESULTS = [
+  {
+    title: '明瞭さ',
+    body: '言葉が正しく伝わる割合。自然な速さと早口で、どれだけ変わるかが分かります。',
+  },
+  { title: '速度', body: '明瞭さを保てる速さ。1秒あたりの文字数で示します。' },
+  {
+    title: '音の傾向',
+    body: '3つの例文に共通してにじむ音の特徴。サ行、語尾、子音の立ち上がりなど。',
+  },
+  { title: '安定性', body: '速度のばらつき、間の取り方、読みの流暢さ。' },
+];
 
 const VALUES = [
   {
@@ -70,17 +84,6 @@ const FAQ = [
 ];
 
 export function LandingScreen() {
-  const [starting, setStarting] = useState(false);
-  const pathname = usePathname();
-
-  // Remember the visit, then show the home screen: at "/" the root screen re-renders on its
-  // own, from any other URL we navigate there.
-  const start = async () => {
-    setStarting(true);
-    await markStarted();
-    if (pathname !== '/') router.replace('/');
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <Head>
@@ -104,9 +107,11 @@ export function LandingScreen() {
             <Link href="/pricing" style={styles.topLink}>
               料金
             </Link>
-            <Pressable style={styles.topButton} onPress={start} disabled={starting}>
-              <Text style={styles.topButtonText}>アプリを開く</Text>
-            </Pressable>
+            {isSupabaseConfigured && (
+              <Pressable style={styles.topButton} onPress={signInWithGoogle}>
+                <Text style={styles.topButtonText}>ログイン</Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -119,20 +124,28 @@ export function LandingScreen() {
             は、週1回の発話チェックと毎日2〜5分のドリルで、伝わる話し方を測り、鍛え、変化を見える化します。
           </Text>
           <View style={styles.heroActions}>
-            <Pressable style={styles.primaryButton} onPress={start} disabled={starting}>
-              <Text style={styles.primaryButtonText}>
-                {starting ? '開いています…' : '無料で始める'}
-              </Text>
-            </Pressable>
-            <Link href="/pricing" asChild>
-              <Pressable style={styles.secondaryButton}>
-                <Text style={styles.secondaryButtonText}>料金を見る</Text>
+            <Link href="/check" asChild>
+              <Pressable style={styles.primaryButton}>
+                <Text style={styles.primaryButtonText}>無料で発話チェックを始める</Text>
               </Pressable>
             </Link>
           </View>
           <Text style={styles.heroNote}>
-            インストール不要。マイク付きのパソコンやスマートフォンのブラウザで使えます。
+            ログイン不要・約3分。インストールもいりません。マイク付きのパソコンやスマートフォンのブラウザで使えます。
           </Text>
+        </View>
+
+        <Text style={styles.sectionTitle}>発話チェックで分かること</Text>
+        <Text style={styles.sectionLead}>
+          3つの例文を、自然な速さと早口で読むだけ。録音はブラウザの中に留まります。結果はAIコーチが、やさしい言葉の診断文にまとめます。
+        </Text>
+        <View style={styles.valueGrid}>
+          {CHECK_RESULTS.map((item) => (
+            <View key={item.title} style={styles.valueCard}>
+              <Text style={styles.valueTitle}>{item.title}</Text>
+              <Text style={styles.valueBody}>{item.body}</Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.demoCard}>
@@ -251,9 +264,11 @@ export function LandingScreen() {
 
         <View style={styles.closing}>
           <Text style={styles.closingTitle}>今日の声を、記録するところから。</Text>
-          <Pressable style={styles.primaryButton} onPress={start} disabled={starting}>
-            <Text style={styles.primaryButtonText}>無料で始める</Text>
-          </Pressable>
+          <Link href="/check" asChild>
+            <Pressable style={styles.primaryButton}>
+              <Text style={styles.primaryButtonText}>無料で発話チェックを始める</Text>
+            </Pressable>
+          </Link>
         </View>
 
         <AppFooter />
@@ -306,15 +321,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryButtonText: { color: palette.white, fontSize: 17, fontWeight: '800' },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: palette.green,
-    borderRadius: 14,
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    alignItems: 'center',
+  sectionLead: {
+    color: palette.muted,
+    fontSize: 16,
+    lineHeight: 26,
+    marginTop: -8,
+    marginBottom: 14,
+    maxWidth: 620,
   },
-  secondaryButtonText: { color: palette.greenDark, fontSize: 17, fontWeight: '800' },
   demoCard: {
     marginTop: 34,
     backgroundColor: palette.greenDark,
