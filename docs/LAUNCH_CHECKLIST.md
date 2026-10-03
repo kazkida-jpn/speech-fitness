@@ -100,7 +100,7 @@
 | 項目                                                                                                | 状態   |
 | --------------------------------------------------------------------------------------------------- | ------ |
 | 投稿ストック（`queue.json` 12 本）、画像テンプレート、Vercel Cron（月水金 9:00）、Graph API 連携    | 済     |
-| 合同会社ランケイ名義の Facebook ページと Instagram プロアカウントの作成、両者の連携                 | 要作業 |
+| 合同会社LearnK 名義の Facebook ページと Instagram プロアカウントの作成、両者の連携                  | 要作業 |
 | Meta 開発者アプリの作成と長期ページアクセストークンの取得                                           | 要作業 |
 | Vercel の環境変数 `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN`, `META_IG_USER_ID`, `CRON_SECRET` を設定 | 要作業 |
 | 本番 Supabase で `social_posts` テーブルの SQL を実行                                               | 要作業 |

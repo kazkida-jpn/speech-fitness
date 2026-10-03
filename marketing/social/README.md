@@ -28,7 +28,7 @@ vercel.json                   crons: 月・水・金 09:00 JST
 
 ## 初回セットアップ（Meta 側）
 
-合同会社ランケイ名義で行います。個人アカウントとは分けてください。
+合同会社LearnK 名義で行います。個人アカウントとは分けてください。
 
 1. **Facebook ページ** を作る（ページ名: 発話フィットネス）。
 2. **Instagram プロアカウント**（ビジネス）を作り、上の Facebook ページとリンクする。
@@ -64,6 +64,7 @@ vercel.json                   crons: 月・水・金 09:00 JST
 
 7. Supabase の SQL Editor で `supabase/schema.sql` の `social_posts` 部分を実行する。
 8. `brand.json` の `instagramHandle` と `siteUrl` を埋めて、`pnpm social:render` で画像を作り直す（フッターの表示が会社名 → @ハンドルに変わる）。
+   `siteUrl`（と `SOCIAL_SITE_URL`）はルートの `https://speech-fitness.learn-k.net` にする。この値に `/promo/<id>.png` をつないで画像 URL を作るので、`/welcome` などのパスを付けると Meta が画像を取得できない。
 9. Instagram のプロフィール欄にアプリの URL を入れる（IG の本文中のリンクは押せないため）。
 
 ## 動作確認
