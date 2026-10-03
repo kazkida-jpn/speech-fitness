@@ -117,7 +117,7 @@ export default function PricingScreen() {
         <Text style={styles.eyebrow}>PREMIUM</Text>
         <Text style={styles.title}>診断に合わせた練習を、続けられる形で</Text>
         <Text style={styles.lede}>
-          週1回の発話チェックは無料です。プレミアムでは、診断結果に合わせたドリルと、過去の自分との比較ができます。
+          ログインすると、週1回の発話チェックが無料です。プレミアムでは、毎日の発話チェックに加えて、診断結果に合わせたドリルと、過去の自分との比較ができます。
         </Text>
 
         {params.checkout === 'success' && (

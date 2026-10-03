@@ -25,6 +25,7 @@ export function isDrillFree(id: DrillId) {
 }
 
 export const PREMIUM_FEATURES = [
+  '毎日の発話チェック（1日1回）',
   '8種類すべてのドリル',
   'AIが診断から選んだ最優先ドリル',
   '測定履歴と推移の記録',

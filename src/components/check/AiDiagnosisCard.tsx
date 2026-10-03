@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { palette } from '@/constants/palette';
 import type { AiDiagnosis } from '@/lib/assessment-types';
 import type { Drill } from '@/lib/drills';
+import { isDrillFree } from '@/lib/plans';
 
 type Props = {
   diagnosis: AiDiagnosis | null;
@@ -11,7 +12,7 @@ type Props = {
   error: string | null;
   /** The drill matching `diagnosis.recommendedDrillId`, resolved by the caller. */
   recommendedDrill: Drill | null;
-  /** Whether the user may run the recommended drill right away. */
+  /** Whether the user has a premium plan. Free drills can be started without one. */
   isPremium: boolean;
   onRetry: () => void;
   onStartDrill: (drill: Drill) => void;
@@ -44,6 +45,9 @@ export function AiDiagnosisCard({
   onSubscribe,
 }: Props) {
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  // A free drill stays free even when it is the AI's pick: no badge, no paywall.
+  const isRecommendedFree = recommendedDrill !== null && isDrillFree(recommendedDrill.id);
+  const canStart = isPremium || isRecommendedFree;
 
   return (
     <View style={styles.aiDiagnosisCard}>
@@ -74,20 +78,20 @@ export function AiDiagnosisCard({
             <View style={styles.recommendedDrillCard}>
               <View style={styles.recommendedDrillHeader}>
                 <Text style={styles.recommendedDrillEyebrow}>AIが最優先に選んだドリル</Text>
-                <Text style={styles.premiumBadge}>プレミアム</Text>
+                {!isRecommendedFree && <Text style={styles.premiumBadge}>プレミアム</Text>}
               </View>
               <Text style={styles.recommendedDrillTitle}>{recommendedDrill.title}</Text>
               <Text style={styles.recommendedDrillReason}>{diagnosis.recommendedDrillReason}</Text>
               <Pressable
                 style={styles.recommendedDrillButton}
                 onPress={() =>
-                  isPremium ? onStartDrill(recommendedDrill) : setIsPaywallOpen(true)
+                  canStart ? onStartDrill(recommendedDrill) : setIsPaywallOpen(true)
                 }>
                 <Text style={styles.recommendedDrillButtonText}>このドリルを始める</Text>
               </Pressable>
             </View>
           )}
-          {isPaywallOpen && recommendedDrill && !isPremium && (
+          {isPaywallOpen && recommendedDrill && !canStart && (
             <View style={styles.paywallCard}>
               <Text style={styles.paywallTitle}>診断に合わせた練習を続ける</Text>
               <Text style={styles.paywallText}>

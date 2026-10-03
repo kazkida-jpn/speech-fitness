@@ -4,6 +4,7 @@ import * as speechsdk from 'microsoft-cognitiveservices-speech-sdk';
 import type { ClarityAssessment } from '@/lib/assessment-types';
 import { MAX_TAKE_SECONDS } from '@/lib/check-session';
 import { ASSESSMENT_SAMPLE_RATE } from '@/lib/wav';
+import { claimAssessment } from '@/server/check-quota';
 
 type AzureWord = {
   Word?: string;
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
       { status: 413 }
     );
   }
+
+  const limited = await claimAssessment(request);
+  if (limited) return limited;
 
   let recognizer: speechsdk.SpeechRecognizer | null = null;
   let audioConfig: speechsdk.AudioConfig | null = null;

@@ -5,6 +5,7 @@ import type {
   StabilityMetrics,
 } from '@/lib/assessment-types';
 import { DRILL_IDS } from '@/lib/drills';
+import { claimDiagnosis, completeCheckPass } from '@/server/check-quota';
 
 const diagnosisSchema = {
   type: 'object',
@@ -129,6 +130,9 @@ export async function POST(request: Request) {
     return Response.json({ error: '診断データの形式が正しくありません。' }, { status: 400 });
   }
 
+  const claim = await claimDiagnosis(request);
+  if (claim.blocked) return claim.blocked;
+
   const model = process.env.OPENAI_DIAGNOSIS_MODEL || 'gpt-5.4-mini';
   const openAIResponse = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -178,9 +182,12 @@ export async function POST(request: Request) {
   if (!outputText) {
     return Response.json({ error: '生成AIから診断文が返りませんでした。' }, { status: 502 });
   }
+  let diagnosis: unknown;
   try {
-    return Response.json(JSON.parse(outputText));
+    diagnosis = JSON.parse(outputText);
   } catch {
     return Response.json({ error: '生成AIの診断結果を解釈できませんでした。' }, { status: 502 });
   }
+  await completeCheckPass(claim.passId);
+  return Response.json(diagnosis);
 }

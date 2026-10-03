@@ -8,7 +8,9 @@ import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
 import { LandingScreen } from '@/components/landing/LandingScreen';
 import { palette } from '@/constants/palette';
+import { useCheckQuota } from '@/hooks/use-check-quota';
 import { hasStoredSessionSync, useAuthUser } from '@/lib/auth';
+import { daysUntilDateKey } from '@/lib/check-quota';
 import { DRILLS } from '@/lib/drills';
 import {
   getAssessmentHistory,
@@ -46,7 +48,7 @@ function HomeScreen() {
     Record<string, { seconds: number; sentences: number }>
   >({});
   const [recommendedIds, setRecommendedIds] = useState<string[]>(['sibilants', 'speed']);
-  const [lastCheckDate, setLastCheckDate] = useState<string | null>(null);
+  const { quota } = useCheckQuota();
   const [isSignedIn, setIsSignedIn] = useState(false);
 
   useFocusEffect(
@@ -64,10 +66,7 @@ function HomeScreen() {
           });
           setHistoryByDate(grouped);
           const latest = checks.at(-1);
-          if (latest) {
-            setLastCheckDate(latest.date);
-            if (latest.recommendedDrillIds.length) setRecommendedIds(latest.recommendedDrillIds);
-          }
+          if (latest?.recommendedDrillIds.length) setRecommendedIds(latest.recommendedDrillIds);
         })
         .catch(() => {
           if (!active) return;
@@ -80,13 +79,9 @@ function HomeScreen() {
     }, [])
   );
 
-  const nextCheck = lastCheckDate ? new Date(`${lastCheckDate}T00:00:00`) : null;
-  if (nextCheck) nextCheck.setDate(nextCheck.getDate() + 7);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const daysUntilCheck = nextCheck
-    ? Math.max(0, Math.ceil((nextCheck.getTime() - today.getTime()) / 86_400_000))
-    : 0;
+  // The server decides when the next check opens: weekly on the free plan, daily on premium.
+  const daysUntilCheck =
+    quota && !quota.allowed && quota.nextAvailableOn ? daysUntilDateKey(quota.nextAvailableOn) : 0;
   const year = month.getFullYear();
   const monthIndex = month.getMonth();
   const firstDay = new Date(year, monthIndex, 1).getDay();
@@ -116,7 +111,11 @@ function HomeScreen() {
             <Text style={styles.freePill}>無料</Text>
           </View>
           <Text style={styles.checkValue}>
-            {daysUntilCheck === 0 ? '今週のチェックができます' : `あと ${daysUntilCheck} 日`}
+            {daysUntilCheck === 0
+              ? quota?.tier === 'premium'
+                ? '今日のチェックができます'
+                : '今週のチェックができます'
+              : `あと ${daysUntilCheck} 日`}
           </Text>
           <Text style={styles.checkNote}>
             3つの例文を自然な速さと早口で読み、今の状態を確認します。

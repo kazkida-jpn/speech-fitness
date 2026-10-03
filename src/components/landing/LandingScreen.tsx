@@ -75,7 +75,7 @@ const FAQ = [
   },
   {
     q: '無料でどこまで使えますか？',
-    a: `週1回の発話チェックと、${FREE_DRILL_IDS.length}種類のドリルはずっと無料です。Googleでログインすると練習カレンダーも記録されます。`,
+    a: `発話チェックは、ログインなしで1回、Googleでログインすると週1回、無料で使えます。${FREE_DRILL_IDS.length}種類のドリルはずっと無料で、ログインすると練習カレンダーも記録されます。`,
   },
   {
     q: 'プレミアムはいつでもやめられますか？',
@@ -218,7 +218,7 @@ export function LandingScreen() {
           <View style={styles.planCard}>
             <Text style={styles.planName}>無料</Text>
             <Text style={styles.planPrice}>¥0</Text>
-            <Text style={styles.planItem}>・週1回の発話チェックとAI診断</Text>
+            <Text style={styles.planItem}>・週1回の発話チェックとAI診断（ログイン時）</Text>
             <Text style={styles.planItem}>・{FREE_DRILL_IDS.length}種類のドリル</Text>
             <Text style={styles.planItem}>・練習カレンダー（ログイン時）</Text>
           </View>

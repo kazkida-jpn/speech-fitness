@@ -8,6 +8,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { ScreenTitle } from '@/components/ScreenTitle';
 import { MicrophonePicker } from '@/components/MicrophonePicker';
 import { AiDiagnosisCard } from '@/components/check/AiDiagnosisCard';
+import { CheckLimitCard } from '@/components/check/CheckLimitCard';
 import { CheckMetricsOverview } from '@/components/check/CheckMetricsOverview';
 import { ClarityConsentCard } from '@/components/check/ClarityConsentCard';
 import { ClarityResultCard } from '@/components/check/ClarityResultCard';
@@ -15,10 +16,12 @@ import { SpeedChangeSummary } from '@/components/check/SpeedChangeSummary';
 import { TakeResultsList } from '@/components/check/TakeResultsList';
 import { WordSpeedComparisonCard } from '@/components/check/WordSpeedComparisonCard';
 import { palette } from '@/constants/palette';
+import { useCheckQuota } from '@/hooks/use-check-quota';
 import { useMicrophoneSelection } from '@/hooks/use-microphone-selection';
 import { useRecordingPlayback } from '@/hooks/use-recording-playback';
 import { useTakeRecorder } from '@/hooks/use-take-recorder';
 import { requestAssessment, requestDiagnosis } from '@/lib/api-client';
+import { signInWithGoogle } from '@/lib/auth';
 import { usePlan } from '@/lib/billing';
 import type { AiDiagnosis, ClarityAssessment } from '@/lib/assessment-types';
 import {
@@ -49,6 +52,7 @@ export default function CheckScreen() {
   const microphone = useMicrophoneSelection(takeRecorder.recorder);
   const playback = useRecordingPlayback();
   const { isPremium } = usePlan();
+  const { quota, refresh: refreshQuota } = useCheckQuota();
   const assessmentSavedRef = useRef(false);
   const [stepPhase, setStepPhase] = useState<StepPhase>('ready');
   const [currentStep, setCurrentStep] = useState(0);
@@ -153,6 +157,8 @@ export default function CheckScreen() {
       return;
     } finally {
       setIsCreatingDiagnosis(false);
+      // A finished diagnosis uses up this check, so the limit may now apply.
+      refreshQuota();
     }
     setAiDiagnosis(diagnosis);
     await saveDiagnosisHistory(diagnosis);
@@ -190,6 +196,7 @@ export default function CheckScreen() {
       await createAiDiagnosis(results);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : '明瞭さを評価できませんでした。');
+      refreshQuota();
     } finally {
       setIsAnalyzingClarity(false);
     }
@@ -198,6 +205,38 @@ export default function CheckScreen() {
   const openRecommendedDrill = (drill: Drill) => {
     router.push({ pathname: '/drills', params: { drill: drill.id, source: 'diagnosis' } });
   };
+
+  // Set once the server says this caller has used the checks their plan allows. Until the
+  // first answer arrives the check is shown as open; the server enforces the limit either way.
+  const reachedQuota = quota && !quota.allowed ? quota : null;
+  // Only a check that has not begun is replaced by the notice; one in progress is left alone.
+  const isBlockedBeforeStart = reachedQuota !== null && phase === 'ready' && currentStep === 0;
+  const limitCard = reachedQuota && (
+    <CheckLimitCard
+      quota={reachedQuota}
+      onSignIn={signInWithGoogle}
+      onSubscribe={() => router.push('/pricing')}
+    />
+  );
+  const freeDrillsCard = !isPremium && (
+    <View style={styles.freeDrillsCard}>
+      <Text style={styles.freeDrillsTitle}>まず、無料のドリルから</Text>
+      <Text style={styles.freeDrillsNote}>
+        {DRILLS.length}種類のドリルのうち、この{FREE_DRILL_IDS.length}
+        つはログインなしで練習できます。1回10文、約3分です。
+      </Text>
+      {DRILLS.filter((drill) => isDrillFree(drill.id)).map((drill) => (
+        <Pressable
+          key={drill.id}
+          style={[styles.freeDrillRow, { backgroundColor: drill.accent }]}
+          onPress={() => router.push({ pathname: '/drills', params: { drill: drill.id } })}>
+          <Text style={styles.freeDrillTitle}>{drill.title}</Text>
+          <Text style={styles.freeDrillBody}>{drill.description}</Text>
+          <Text style={styles.freeDrillLink}>始める →</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
 
   const hasClarityResults = Object.keys(clarityResults).length > 0;
   const recommendedDrill = aiDiagnosis
@@ -219,7 +258,11 @@ export default function CheckScreen() {
           <View>
             <Text style={styles.eyebrow}>WEEKLY CHECK</Text>
             <Text style={styles.logo}>発話チェック</Text>
-            {!isPremium && <Text style={styles.freePill}>無料・ログイン不要</Text>}
+            {!isPremium && (
+              <Text style={styles.freePill}>
+                {quota?.tier === 'free' ? '無料・週1回' : '無料・ログイン不要'}
+              </Text>
+            )}
           </View>
           <View style={styles.dayBadge}>
             <Text style={styles.dayLabel}>継続</Text>
@@ -261,35 +304,22 @@ export default function CheckScreen() {
               ) : (
                 <ClarityConsentCard isAnalyzing={isAnalyzingClarity} onAnalyze={analyzeClarity} />
               )}
-              {!isPremium && (
-                <View style={styles.freeDrillsCard}>
-                  <Text style={styles.freeDrillsTitle}>まず、無料のドリルから</Text>
-                  <Text style={styles.freeDrillsNote}>
-                    {DRILLS.length}種類のドリルのうち、この{FREE_DRILL_IDS.length}
-                    つはログインなしで練習できます。1回10文、約3分です。
-                  </Text>
-                  {DRILLS.filter((drill) => isDrillFree(drill.id)).map((drill) => (
-                    <Pressable
-                      key={drill.id}
-                      style={[styles.freeDrillRow, { backgroundColor: drill.accent }]}
-                      onPress={() =>
-                        router.push({ pathname: '/drills', params: { drill: drill.id } })
-                      }>
-                      <Text style={styles.freeDrillTitle}>{drill.title}</Text>
-                      <Text style={styles.freeDrillBody}>{drill.description}</Text>
-                      <Text style={styles.freeDrillLink}>始める →</Text>
-                    </Pressable>
-                  ))}
+              {freeDrillsCard}
+              {limitCard || (
+                <View style={styles.restartActions}>
+                  <Pressable style={styles.primaryButton} onPress={() => restartTest(false)}>
+                    <Text style={styles.primaryButtonText}>同じ3例文でもう一度発話する</Text>
+                  </Pressable>
+                  <Pressable style={styles.secondaryButton} onPress={() => restartTest(true)}>
+                    <Text style={styles.secondaryButtonText}>違う3例文でもう一度測定する</Text>
+                  </Pressable>
                 </View>
               )}
-              <View style={styles.restartActions}>
-                <Pressable style={styles.primaryButton} onPress={() => restartTest(false)}>
-                  <Text style={styles.primaryButtonText}>同じ3例文でもう一度発話する</Text>
-                </Pressable>
-                <Pressable style={styles.secondaryButton} onPress={() => restartTest(true)}>
-                  <Text style={styles.secondaryButtonText}>違う3例文でもう一度測定する</Text>
-                </Pressable>
-              </View>
+            </>
+          ) : isBlockedBeforeStart ? (
+            <>
+              <View style={styles.limitWrap}>{limitCard}</View>
+              {freeDrillsCard}
             </>
           ) : (
             <>
@@ -464,6 +494,7 @@ const styles = StyleSheet.create({
   freeDrillBody: { color: palette.muted, fontSize: 15, lineHeight: 23, marginTop: 4 },
   freeDrillLink: { color: palette.greenDark, fontSize: 15, fontWeight: '800', marginTop: 8 },
   restartActions: { gap: 12 },
+  limitWrap: { marginBottom: 18 },
   secondaryButton: {
     backgroundColor: palette.white,
     paddingVertical: 16,
