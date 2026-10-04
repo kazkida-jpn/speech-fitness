@@ -1,6 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { buildCaption, pickNextPost, queue, type SocialPost } from '@/server/social';
+import {
+  buildCaption,
+  enabledChannels,
+  pickNextPosts,
+  queue,
+  type Channel,
+  type SocialPost,
+} from '@/server/social';
 
 const post: SocialPost = {
   id: 'p1',
@@ -27,35 +34,64 @@ describe('buildCaption', () => {
   });
 });
 
-describe('pickNextPost', () => {
+describe('pickNextPosts', () => {
   const draft: SocialPost = { ...post, id: 'd', status: 'draft' };
   const second: SocialPost = { ...post, id: 'p2' };
+  const both: Channel[] = ['instagram', 'facebook'];
+  const ids = (picks: ReturnType<typeof pickNextPosts>) =>
+    picks.map((pick) => `${pick.channel}:${pick.post.id}`);
 
-  it('skips drafts and fully published posts', () => {
-    const next = pickNextPost(
+  it('skips drafts and published posts', () => {
+    const picks = pickNextPosts(
       [draft, post, second],
       [
         { post_id: 'p1', channel: 'instagram' },
         { post_id: 'p1', channel: 'facebook' },
-      ]
+      ],
+      both
     );
-    expect(next?.post.id).toBe('p2');
-    expect(next?.pending).toEqual(['instagram', 'facebook']);
+    expect(ids(picks)).toEqual(['instagram:p2', 'facebook:p2']);
   });
 
-  it('resumes a post whose second channel failed', () => {
-    const next = pickNextPost([post, second], [{ post_id: 'p1', channel: 'instagram' }]);
-    expect(next?.post.id).toBe('p1');
-    expect(next?.pending).toEqual(['facebook']);
+  it('advances Facebook alone while Instagram is not enabled', () => {
+    const picks = pickNextPosts(
+      [post, second],
+      [{ post_id: 'p1', channel: 'facebook' }],
+      ['facebook']
+    );
+    expect(ids(picks)).toEqual(['facebook:p2']);
   });
 
-  it('returns null when everything is published', () => {
+  it('starts a channel enabled later from the top without holding the other back', () => {
+    const picks = pickNextPosts([post, second], [{ post_id: 'p1', channel: 'facebook' }], both);
+    expect(ids(picks)).toEqual(['instagram:p1', 'facebook:p2']);
+  });
+
+  it('skips posts that do not list the channel', () => {
+    const facebookOnly: SocialPost = { ...post, id: 'f', channels: ['facebook'] };
+    const picks = pickNextPosts([facebookOnly, second], [], both);
+    expect(ids(picks)).toEqual(['instagram:p2', 'facebook:f']);
+  });
+
+  it('returns nothing when everything is published', () => {
     expect(
-      pickNextPost(
+      pickNextPosts(
         [post],
-        post.channels.map((channel) => ({ post_id: 'p1', channel }))
+        post.channels.map((channel) => ({ post_id: 'p1', channel })),
+        both
       )
-    ).toBeNull();
+    ).toEqual([]);
+  });
+});
+
+describe('enabledChannels', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('is Facebook only until META_IG_USER_ID is set', () => {
+    vi.stubEnv('META_IG_USER_ID', '');
+    expect(enabledChannels()).toEqual(['facebook']);
+    vi.stubEnv('META_IG_USER_ID', '123');
+    expect(enabledChannels()).toEqual(['instagram', 'facebook']);
   });
 });
 

@@ -44,6 +44,8 @@ create table if not exists public.social_posts (
 );
 
 alter table public.social_posts enable row level security;
+-- The service role gets no table privileges by default on this project.
+grant select, insert, update, delete on public.social_posts to service_role;
 
 -- One row per started speech check, written by the /assessment and /diagnosis routes to enforce
 -- the per-plan limits (see src/server/check-quota.ts). A signed-out visitor is recorded by a
@@ -61,6 +63,7 @@ create table if not exists public.check_passes (
 );
 
 alter table public.check_passes enable row level security;
+grant select, insert, update, delete on public.check_passes to service_role;
 
 create index if not exists check_passes_user_date on public.check_passes(user_id, started_at desc);
 create index if not exists check_passes_device_date on public.check_passes(device_id, started_at desc);

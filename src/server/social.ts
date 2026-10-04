@@ -3,10 +3,10 @@ import queueJson from '../../marketing/social/queue.json';
 
 import { getSupabaseAdmin } from '@/server/supabase-admin';
 
-// Server-only. Publishes the next queued promo post to Instagram and the Facebook Page through
-// the Meta Graph API. The queue lives in marketing/social/queue.json, the images are served
-// from public/promo, and the published log lives in the Supabase `social_posts` table so a post
-// is never sent twice.
+// Server-only. Publishes the next queued promo post to the Facebook Page, and to Instagram once
+// META_IG_USER_ID is set, through the Meta Graph API. The queue lives in
+// marketing/social/queue.json, the images are served from public/promo, and the published log
+// lives in the Supabase `social_posts` table so a post is never sent twice.
 
 export type Channel = 'instagram' | 'facebook';
 
@@ -51,30 +51,48 @@ export function buildCaption(post: SocialPost, channel: Channel, siteUrl: string
   return parts.join('\n\n');
 }
 
-/** First ready post that still has a channel without a published row, with those channels. */
-export function pickNextPost(posts: SocialPost[], published: PublishedRow[]) {
-  for (const post of posts) {
-    if (post.status !== 'ready') continue;
-    const done = new Set(published.filter((row) => row.post_id === post.id).map((r) => r.channel));
-    const pending = post.channels.filter((channel) => !done.has(channel));
-    if (pending.length) return { post, pending };
+/** The Facebook Page is always posted to. Instagram joins once META_IG_USER_ID is set. */
+export function enabledChannels(): Channel[] {
+  return process.env.META_IG_USER_ID ? ['instagram', 'facebook'] : ['facebook'];
+}
+
+/**
+ * Each channel walks the queue on its own: for every given channel, the first ready post that
+ * lists it and has no published row for it. A channel that is enabled later, or that keeps
+ * failing, starts from its own position and does not hold the others back.
+ */
+export function pickNextPosts(posts: SocialPost[], published: PublishedRow[], channels: Channel[]) {
+  const done = new Set(published.map((row) => `${row.channel}:${row.post_id}`));
+  const picks: { channel: Channel; post: SocialPost }[] = [];
+  for (const channel of channels) {
+    const post = posts.find(
+      (item) =>
+        item.status === 'ready' &&
+        item.channels.includes(channel) &&
+        !done.has(`${channel}:${item.id}`)
+    );
+    if (post) picks.push({ channel, post });
   }
-  return null;
+  return picks;
 }
 
 type MetaConfig = {
   version: string;
   pageId: string;
-  igUserId: string;
+  igUserId?: string;
   token: string;
 };
 
 export function getMetaConfig(): MetaConfig | null {
   const pageId = process.env.META_PAGE_ID;
-  const igUserId = process.env.META_IG_USER_ID;
   const token = process.env.META_PAGE_ACCESS_TOKEN;
-  if (!pageId || !igUserId || !token) return null;
-  return { version: process.env.META_GRAPH_VERSION ?? 'v23.0', pageId, igUserId, token };
+  if (!pageId || !token) return null;
+  return {
+    version: process.env.META_GRAPH_VERSION ?? 'v23.0',
+    pageId,
+    igUserId: process.env.META_IG_USER_ID || undefined,
+    token,
+  };
 }
 
 type GraphResult = {
@@ -110,6 +128,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Two-step Instagram publish: create a media container from a public image URL, then publish it. */
 export async function publishToInstagram(config: MetaConfig, imageUrl: string, caption: string) {
+  if (!config.igUserId) throw new Error('META_IG_USER_ID is not configured');
   const container = await graph(config, `${config.igUserId}/media`, {
     image_url: imageUrl,
     caption,
@@ -139,36 +158,43 @@ export async function publishToFacebook(config: MetaConfig, imageUrl: string, me
 }
 
 export type PublishReport = {
-  post: string | null;
-  imageUrl?: string;
-  results: { channel: Channel; ok: boolean; id?: string; caption: string; error?: string }[];
+  results: {
+    channel: Channel;
+    post: string;
+    imageUrl: string;
+    ok: boolean;
+    id?: string;
+    caption: string;
+    error?: string;
+  }[];
 };
 
 /**
- * Publishes the next pending post. With `dryRun`, returns what would be sent without calling
- * Meta or writing the log. `origin` is the deployment origin used to build the image URL when
- * SOCIAL_SITE_URL is not set.
+ * Publishes the next pending post of each enabled channel. With `dryRun`, returns what would be
+ * sent without calling Meta or writing the log. `origin` is the deployment origin used to build
+ * the image URL when SOCIAL_SITE_URL is not set. `results` is empty when the queue is used up.
  */
 export async function publishNext(origin: string, dryRun: boolean): Promise<PublishReport> {
   const admin = getSupabaseAdmin();
   if (!admin) throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
   const { data, error } = await admin.from('social_posts').select('post_id, channel');
   if (error) throw error;
-  const next = pickNextPost(queue, (data ?? []) as PublishedRow[]);
-  if (!next) return { post: null, results: [] };
+  const picks = pickNextPosts(queue, (data ?? []) as PublishedRow[], enabledChannels());
+  const report: PublishReport = { results: [] };
+  if (!picks.length) return report;
 
   const siteUrl = (process.env.SOCIAL_SITE_URL || brand.siteUrl || origin).replace(/\/$/, '');
-  const imageUrl = `${siteUrl}/promo/${next.post.id}.png`;
-  const report: PublishReport = { post: next.post.id, imageUrl, results: [] };
   const config = dryRun ? null : getMetaConfig();
   if (!dryRun && !config) {
-    throw new Error('META_PAGE_ID, META_IG_USER_ID and META_PAGE_ACCESS_TOKEN are required');
+    throw new Error('META_PAGE_ID and META_PAGE_ACCESS_TOKEN are required');
   }
 
-  for (const channel of next.pending) {
-    const caption = buildCaption(next.post, channel, siteUrl);
+  for (const { channel, post } of picks) {
+    const imageUrl = `${siteUrl}/promo/${post.id}.png`;
+    const caption = buildCaption(post, channel, siteUrl);
+    const base = { channel, post: post.id, imageUrl, caption };
     if (!config) {
-      report.results.push({ channel, ok: true, caption });
+      report.results.push({ ...base, ok: true });
       continue;
     }
     try {
@@ -178,13 +204,13 @@ export async function publishNext(origin: string, dryRun: boolean): Promise<Publ
           : await publishToFacebook(config, imageUrl, caption);
       const { error: logError } = await admin
         .from('social_posts')
-        .insert({ post_id: next.post.id, channel, external_id: id });
+        .insert({ post_id: post.id, channel, external_id: id });
       if (logError) throw logError;
-      report.results.push({ channel, ok: true, id, caption });
+      report.results.push({ ...base, ok: true, id });
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : String(cause);
-      console.error(`social publish failed (${next.post.id}/${channel})`, cause);
-      report.results.push({ channel, ok: false, caption, error: message });
+      console.error(`social publish failed (${post.id}/${channel})`, cause);
+      report.results.push({ ...base, ok: false, error: message });
     }
   }
   return report;

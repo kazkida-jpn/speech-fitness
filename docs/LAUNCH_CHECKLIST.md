@@ -84,26 +84,31 @@
 
 ## 7. 運用
 
-| 項目                                                                                                                                                        | 状態   |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 問い合わせ窓口 `info@learn-k.net` の受信確認                                                                                                                | 済     |
-| Azure Speech / OpenAI の本番キーと利用上限（OpenAI 月 $10、Azure 月 $20 の予算アラート）                                                                    | 済     |
-| README の公開に関する記述を更新                                                                                                                             | 済     |
-| 退会（アカウント削除）依頼が来たときの手順（Supabase の auth.users 削除と Stripe 顧客の解約）                                                               | 要作業 |
-| 会計: Stripe の入金と消費税（税込表示済み）、インボイス登録番号を領収書に載せるか                                                                           | 要判断 |
-| 発話チェックの回数制限（未ログイン 1 回、ログイン 週 1 回、プレミアム 1 日 1 回）。Supabase に `check_passes` テーブルの作成が必要（`supabase/schema.sql`） | 要作業 |
+| 項目                                                                                                                                       | 状態   |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 問い合わせ窓口 `info@learn-k.net` の受信確認                                                                                               | 済     |
+| Azure Speech / OpenAI の本番キーと利用上限（OpenAI 月 $10、Azure 月 $20 の予算アラート）                                                   | 済     |
+| README の公開に関する記述を更新                                                                                                            | 済     |
+| 退会（アカウント削除）依頼が来たときの手順（Supabase の auth.users 削除と Stripe 顧客の解約）                                              | 要作業 |
+| 会計: Stripe の入金と消費税（税込表示済み）、インボイス登録番号を領収書に載せるか                                                          | 要判断 |
+| 発話チェックの回数制限（未ログイン 1 回、ログイン 週 1 回、プレミアム 1 日 1 回）。Supabase の `check_passes` テーブルは 2026-10-04 に作成 | 済     |
 
-## 8. 正式ローンチ（Instagram での告知）
+## 8. 正式ローンチ（Facebook / Instagram での告知）
 
 コードと投稿ストックは `marketing/social/` に用意済みです。手順の詳細は `marketing/social/README.md` を参照してください。
 
-| 項目                                                                                                | 状態   |
-| --------------------------------------------------------------------------------------------------- | ------ |
-| 投稿ストック（`queue.json` 12 本）、画像テンプレート、Vercel Cron（月水金 9:00）、Graph API 連携    | 済     |
-| 合同会社LearnK 名義の Facebook ページと Instagram プロアカウントの作成、両者の連携                  | 要作業 |
-| Meta 開発者アプリの作成と長期ページアクセストークンの取得                                           | 要作業 |
-| Vercel の環境変数 `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN`, `META_IG_USER_ID`, `CRON_SECRET` を設定 | 要作業 |
-| 本番 Supabase で `social_posts` テーブルの SQL を実行                                               | 要作業 |
-| `marketing/social/brand.json` の `instagramHandle` と `siteUrl` を埋めて `pnpm social:render`       | 要作業 |
-| Instagram のプロフィールにサイト URL を記載                                                         | 要作業 |
-| `pnpm social:publish`（ドライラン）→ `--send` で 1 本目を投稿                                       | 要作業 |
+Instagram のアカウントが作り直し待ちのため、Facebook ページだけで先に投稿を始めます（2026-10-04）。`META_IG_USER_ID` を入れると Instagram にも投稿が始まります。
+
+| 項目                                                                                                         | 状態   |
+| ------------------------------------------------------------------------------------------------------------ | ------ |
+| 投稿ストック（`queue.json` 12 本）、画像テンプレート、Vercel Cron（月水金 9:00）、Graph API 連携             | 済     |
+| `marketing/social/brand.json` の `company` と `siteUrl` を直して `pnpm social:render`                        | 済     |
+| 合同会社LearnK 名義の Facebook ページの作成                                                                  | 済     |
+| Meta 開発者アプリ（LearnK Publisher）の作成と無期限ページトークンの取得                                      | 済     |
+| 本番 Supabase で `social_posts` テーブルの SQL を実行                                                        | 済     |
+| Vercel の環境変数 `CRON_SECRET` を設定し、`pnpm social:publish`（ドライラン）で確認                          | 要作業 |
+| Vercel の環境変数 `META_PAGE_ID`, `META_PAGE_ACCESS_TOKEN` を設定し、`--send` で 1 本目を Facebook に投稿    | 要作業 |
+| 2026-12 下旬: データアクセスの期限（2027-01-02）のあとも Facebook への投稿が続くかを確認                     | 要作業 |
+| Instagram プロアカウントの作り直し（2026-10-11〜18 ごろ）、Facebook ページとの連携                           | 要作業 |
+| Instagram の権限を含むトークンの取り直し、`META_PAGE_ACCESS_TOKEN` の入れ替えと `META_IG_USER_ID` の追加     | 要作業 |
+| `brand.json` の `instagramHandle` を埋めて `pnpm social:render`、Instagram のプロフィールにサイト URL を記載 | 要作業 |
