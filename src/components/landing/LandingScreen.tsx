@@ -26,6 +26,37 @@ const CHECK_RESULTS = [
   { title: '安定性', body: '速度のばらつき、間の取り方、読みの流暢さ。' },
 ];
 
+// What a visitor can do signed out, signed in, and on premium. A boolean cell renders as a mark.
+const ACCESS_COLUMNS = [
+  { title: '未ログイン', sub: '登録なし' },
+  { title: 'ログイン', sub: '無料' },
+  { title: 'プレミアム', sub: '有料' },
+];
+
+const ACCESS_ROWS: { label: string; sub: string; cells: (string | boolean)[] }[] = [
+  {
+    label: '発話チェック',
+    sub: 'AI診断つき',
+    cells: ['1回のみ', '週1回', '毎日1回'],
+  },
+  {
+    label: 'ドリル',
+    sub: '1回2〜5分',
+    cells: [
+      `${FREE_DRILL_IDS.length}種類`,
+      `${FREE_DRILL_IDS.length}種類`,
+      `全${DRILLS.length}種類`,
+    ],
+  },
+  { label: 'カレンダー', sub: '練習日を記録', cells: [false, true, true] },
+  { label: '履歴と推移', sub: '過去と比べる', cells: [false, false, true] },
+  {
+    label: '料金',
+    sub: '税込',
+    cells: ['無料', '無料', `月${BILLING_PLANS.monthly.amount.toLocaleString('ja-JP')}円`],
+  },
+];
+
 const VALUES = [
   {
     title: '測る',
@@ -176,6 +207,51 @@ export function LandingScreen() {
             速くすると「サ行」と語尾の明瞭さが下がります。今週は「サ行・ザ行を明瞭に」と「語尾を最後まで届ける」がおすすめです。
           </Text>
         </View>
+
+        <Text style={styles.sectionTitle}>プランごとにできること</Text>
+        <Text style={styles.sectionLead}>
+          ログインなしで、すぐに試せます。Googleでログインすると週1回のチェックと練習の記録が、プレミアムではすべてのドリルと履歴が使えます。
+        </Text>
+        <View style={styles.accessTable}>
+          <View style={styles.accessRow}>
+            <View style={styles.accessLabelCell} />
+            {ACCESS_COLUMNS.map((column, index) => (
+              <View
+                key={column.title}
+                style={[styles.accessCell, index === 2 && styles.accessCellFeatured]}>
+                <Text style={styles.accessHeadTitle}>{column.title}</Text>
+                <Text style={styles.accessHeadSub}>{column.sub}</Text>
+              </View>
+            ))}
+          </View>
+          {ACCESS_ROWS.map((row) => (
+            <View key={row.label} style={[styles.accessRow, styles.accessRowBorder]}>
+              <View style={styles.accessLabelCell}>
+                <Text style={styles.accessLabel}>{row.label}</Text>
+                <Text style={styles.accessLabelSub}>{row.sub}</Text>
+              </View>
+              {row.cells.map((cell, index) => (
+                <View
+                  key={index}
+                  style={[styles.accessCell, index === 2 && styles.accessCellFeatured]}>
+                  {typeof cell === 'string' ? (
+                    <Text style={styles.accessValue}>{cell}</Text>
+                  ) : (
+                    <Text
+                      style={cell ? styles.accessYes : styles.accessNo}
+                      accessibilityLabel={cell ? '使えます' : '使えません'}>
+                      {cell ? '○' : '—'}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+        <Text style={styles.accessNote}>
+          プレミアムは年額{BILLING_PLANS.yearly.amount.toLocaleString('ja-JP')}
+          円も選べます。初回{TRIAL_DAYS}日間は無料で、その間に解約すれば料金はかかりません。
+        </Text>
 
         <Text style={styles.sectionTitle}>3つのこと</Text>
         <View style={styles.valueGrid}>
@@ -361,6 +437,42 @@ const styles = StyleSheet.create({
     marginTop: 44,
     marginBottom: 14,
   },
+  accessTable: {
+    backgroundColor: palette.white,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: palette.line,
+    overflow: 'hidden',
+  },
+  accessRow: { flexDirection: 'row', alignItems: 'stretch' },
+  accessRowBorder: { borderTopWidth: 1, borderTopColor: palette.line },
+  accessLabelCell: {
+    flex: 1.5,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+  },
+  accessCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+    paddingVertical: 12,
+  },
+  accessCellFeatured: { backgroundColor: palette.mint },
+  accessHeadTitle: {
+    color: palette.greenDark,
+    fontSize: 13,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  accessHeadSub: { color: palette.muted, fontSize: 12, fontWeight: '700', marginTop: 2 },
+  accessLabel: { color: palette.ink, fontSize: 14, fontWeight: '800' },
+  accessLabelSub: { color: palette.muted, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  accessValue: { color: palette.ink, fontSize: 14, fontWeight: '700', textAlign: 'center' },
+  accessYes: { color: palette.green, fontSize: 18, fontWeight: '800' },
+  accessNo: { color: palette.muted, fontSize: 16 },
+  accessNote: { color: palette.muted, fontSize: 14, lineHeight: 22, marginTop: 10 },
   valueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   valueCard: {
     flexGrow: 1,
